@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Culligan — Purchase Order Form</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+            background: #f0f4f8;
+            color: #1a202c;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+
+        .form-container {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            max-width: 640px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .form-header {
+            background: linear-gradient(135deg, #2968fe, #1a4fd4);
+            color: #fff;
+            padding: 2rem 2.5rem;
+        }
+
+        .form-header .logo {
+            margin-bottom: 1rem;
+        }
+
+        .form-header .logo svg {
+            height: 36px;
+            width: auto;
+        }
+
+        .form-header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .form-header p {
+            font-size: 0.875rem;
+            opacity: 0.85;
+        }
+
+        .form-body { padding: 2rem 2.5rem; }
+
+        .section-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #2968fe;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .prefill-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .prefill-grid.single { grid-template-columns: 1fr; }
+
+        .prefill-item label {
+            display: block;
+            font-size: 0.75rem;
+            color: #a0aec0;
+            margin-bottom: 0.15rem;
+        }
+
+        .prefill-item span {
+            font-size: 0.95rem;
+            color: #2d3748;
+            font-weight: 500;
+        }
+
+        .field-group { margin-bottom: 1.25rem; }
+
+        .field-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #4a5568;
+            margin-bottom: 0.35rem;
+        }
+
+        .field-group label .required {
+            color: #e53e3e;
+            margin-left: 2px;
+        }
+
+        .field-group input,
+        .field-group textarea {
+            width: 100%;
+            padding: 0.65rem 0.85rem;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            color: #2d3748;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .field-group input:focus,
+        .field-group textarea:focus {
+            outline: none;
+            border-color: #2968fe;
+            box-shadow: 0 0 0 3px rgba(41,104,254,0.15);
+        }
+
+        .field-group textarea { resize: vertical; min-height: 80px; }
+
+        .field-group input.error,
+        .field-group textarea.error {
+            border-color: #e53e3e;
+            box-shadow: 0 0 0 3px rgba(229,62,62,0.1);
+        }
+
+        .field-error {
+            font-size: 0.75rem;
+            color: #e53e3e;
+            margin-top: 0.25rem;
+            display: none;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 0.85rem;
+            background: #2968fe;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+            margin-top: 0.5rem;
+        }
+
+        .btn-submit:hover { background: #1a4fd4; }
+        .btn-submit:disabled { background: #a0aec0; cursor: not-allowed; }
+
+        .status-banner {
+            padding: 1rem 2.5rem;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .status-banner.error-banner {
+            background: #fff5f5;
+            color: #c53030;
+            border-top: 2px solid #fc8181;
+            display: block;
+        }
+
+        .status-banner.success-banner {
+            background: #f0fff4;
+            color: #276749;
+            border-top: 2px solid #68d391;
+            display: block;
+        }
+
+        .loading-overlay {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e2e8f0;
+            border-top-color: #2968fe;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .error-page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .error-page h2 { color: #c53030; margin-bottom: 0.5rem; }
+        .error-page p { color: #718096; }
+
+        @media (max-width: 480px) {
+            .prefill-grid { grid-template-columns: 1fr; }
+            .form-body, .form-header { padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-container" id="formContainer">
+    <!-- Loading state -->
+    <div class="loading-overlay" id="loadingState">
+        <div class="spinner"></div>
+        <p>Loading form data...</p>
+    </div>
+
+    <!-- Error state -->
+    <div class="error-page" id="errorState" style="display:none;">
+        <h2>Unable to Load Form</h2>
+        <p id="errorMessage">Something went wrong.</p>
+    </div>
+
+    <!-- Form (hidden until loaded) -->
+    <div id="formContent" style="display:none;">
+        <div class="form-header">
+            <div class="logo">
+                <svg xmlns="http://www.w3.org/2000/svg" width="162" height="60" viewBox="0 0 162 60" fill="none">
+                    <path d="M112.525 20.0157C111.524 19.8535 110.576 20.4246 110.199 21.3325C109.913 21.1235 108.389 20.0048 106.196 20.0048C104.53 20.0048 103.01 20.6191 101.712 21.5054C99.7592 22.8474 98.2032 24.8181 97.0634 27.0122C95.9342 29.2099 95.2193 31.6399 95.2122 34.034C95.2122 34.4159 95.2371 34.7978 95.278 35.1778C95.278 35.1778 94.3497 37.4746 91.8922 37.4746C90.6954 37.4746 88.437 36.6694 88.3072 33.8574C88.3001 33.6809 88.3499 33.1891 88.3552 33.1261L89.9041 22.4944C90.0784 21.3 89.2622 20.1886 88.0867 20.0139C86.9077 19.8373 85.8106 20.6642 85.6381 21.8549L83.8136 34.3798C83.5522 36.156 82.0425 37.5088 80.2678 37.471C77.5452 37.4188 76.5708 34.8284 76.6828 33.8538C76.7041 33.6773 76.697 33.4936 76.7219 33.3098C76.7219 33.299 80.4847 7.75729 80.4847 7.75729C80.659 6.56298 79.8499 5.45153 78.6709 5.27319C77.4919 5.09666 76.3947 5.91628 76.2187 7.1106L72.2052 34.3384C71.9437 36.1182 70.434 37.4368 68.6593 37.4332C67.523 37.4332 65.1402 36.5847 65.0744 33.816C65.0744 33.6755 65.0886 33.5332 65.1064 33.3891L68.8763 7.75549C69.0505 6.56118 68.2379 5.44973 67.0624 5.27139C65.8835 5.09486 64.7863 5.91809 64.6102 7.1088L60.6038 34.3366C60.3424 36.1164 58.8327 37.4458 57.058 37.4314C54.8298 37.4134 53.4588 35.5453 53.473 33.8142C53.473 33.6593 53.4873 33.499 53.5086 33.3368L55.077 22.4889C55.2513 21.2946 54.4351 20.1832 53.2561 20.0121C52.0771 19.8355 50.9799 20.6624 50.811 21.8567L49.0043 34.3438C48.7429 36.1164 47.114 37.498 45.4584 37.435C42.5812 37.3251 41.7935 34.8284 41.8735 33.8178C41.8877 33.6413 41.8877 33.4575 41.9126 33.2738L43.465 22.4925C43.6357 21.2982 42.8231 20.1868 41.6441 20.0157C40.4651 19.8427 39.3679 20.666 39.199 21.8603L37.6466 32.6379C37.5879 33.0306 37.5594 33.4287 37.5594 33.8214C37.5594 35.9939 38.4308 37.9934 39.8498 39.4417C41.2618 40.8936 43.257 41.8123 45.4602 41.8087C47.7364 41.8087 49.8081 40.8234 51.2591 39.2273C51.3249 39.2976 53.3486 41.8087 57.058 41.8087C59.3342 41.8087 61.4058 40.8234 62.8569 39.2273C62.9227 39.2976 64.9943 41.8087 68.6558 41.8087C70.9266 41.8087 72.9929 40.827 74.444 39.2435C74.5133 39.321 76.5743 41.8465 80.2606 41.8465C82.5439 41.8465 84.6227 40.854 86.0738 39.2508C86.1431 39.3246 88.1934 41.8465 91.8833 41.8465C93.9407 41.8465 95.8239 41.0305 97.243 39.6993C97.7622 40.2469 99.4391 41.8429 102.174 41.8429C104.909 41.8429 107.014 40.083 107.189 39.9497L106.502 44.2874C99.6329 43.457 95.8915 46.0852 94.4831 47.4002C90.6759 50.9705 91.3143 55.4145 92.8471 57.3402C93.8412 58.5903 94.8494 59.3181 96.3485 59.7288C98.2939 60.262 100.623 60.044 102.796 58.7651C102.839 58.7398 107.71 56.0306 109.84 49.4357C110.269 49.5672 110.587 49.6861 110.758 49.751C111.871 50.1851 113.116 49.6195 113.544 48.4936C113.973 47.366 113.414 46.105 112.303 45.6709C111.979 45.5466 111.428 45.3556 110.731 45.1485L114.302 22.5196C114.49 21.3289 113.688 20.2066 112.513 20.0157L112.527 20.0121L112.525 20.0157ZM103.037 52.8692C100.62 55.5676 99.1617 55.6307 98.4024 55.6217C97.9205 55.6217 96.9584 55.5406 96.3343 54.7462C95.6443 53.8671 96.0978 52.5287 96.3556 52.0045C96.6099 51.4785 96.9833 50.9939 97.3319 50.6877C98.2566 49.8681 99.3022 49.3313 100.438 48.9818C101.571 48.6359 102.793 48.4936 103.999 48.4936C104.532 48.4936 105.058 48.526 105.571 48.5783C104.907 50.4085 103.959 51.8352 103.035 52.8674H103.038L103.037 52.8692ZM108.233 31.0995C107.626 32.8307 106.586 34.5474 105.425 35.7237C104.849 36.3163 103.545 37.4692 102.185 37.4692C101.063 37.4692 100.211 36.682 99.9352 36.0533C99.6845 35.4841 99.5316 34.8698 99.5316 34.0322C99.5316 33.0576 99.745 31.8993 100.152 30.7465C100.759 29.0153 101.799 27.2986 102.96 26.1223C103.536 25.5297 104.875 24.3768 106.2 24.3768C107.448 24.3768 108.195 25.2919 108.45 25.7927C108.704 26.2844 108.853 26.9762 108.853 27.8138C108.853 28.7884 108.64 29.9466 108.233 31.0995Z" fill="#ffffff"/>
+                    <path d="M88.8532 17.6869C90.4727 17.6869 91.7856 16.357 91.7856 14.7164C91.7856 13.0759 90.4727 11.746 88.8532 11.746C87.2338 11.746 85.9209 13.0759 85.9209 14.7164C85.9209 16.357 87.2338 17.6869 88.8532 17.6869Z" fill="#ffffff"/>
+                    <path d="M34.5497 29.7481C33.5556 29.087 32.2166 29.3662 31.564 30.3768C30.2001 32.4826 26.1563 37.4346 19.0451 37.4346C14.9693 37.4346 11.3044 35.7701 8.62986 33.0645C5.96248 30.3588 4.31938 26.6426 4.31582 22.5138C4.31582 18.3851 5.95893 14.6724 8.62986 11.9631C11.3008 9.26108 15.3285 7.39666 19.5679 7.61823C19.1216 12.2676 20.08 15.4524 21.4724 17.805C23.9406 21.9626 28.8273 23.7748 32.4851 21.1177C35.5224 18.9129 35.6344 14.912 34.3398 11.9019C33.3992 9.71503 31.2368 7.78396 30.3334 7.0526C27.6269 4.86212 24.6395 4.0533 24.6395 4.0533C24.7924 3.54171 24.9222 3.16342 24.9951 2.96888C25.4237 1.84121 24.8653 0.580251 23.7539 0.146119C22.6407 -0.288012 21.3959 0.27762 20.9674 1.40348C20.8251 1.77817 20.6046 2.43207 20.3681 3.28232C8.85748 2.50772 0 11.7794 0 22.5174C0 33.2554 8.52495 41.8048 19.0398 41.8048C28.2707 41.8048 33.4418 35.4297 35.1667 32.7727C35.8194 31.7657 35.5437 30.4092 34.5461 29.7481H34.5497ZM23.8233 8.38021C23.9495 8.42344 26.8712 9.33314 29.2558 12.0046C31.756 14.8093 30.602 17.1331 29.9316 17.5997C28.5819 18.5364 26.7058 17.5042 25.9216 16.5855C25.1374 15.6668 24.5968 14.586 24.2376 13.4385C23.5441 11.2174 23.7841 8.85758 23.8233 8.38021Z" fill="#ffffff"/>
+                    <path d="M154.085 22.3191C152.673 20.8672 150.678 19.9521 148.475 19.9521C146.554 19.9521 145.299 20.7249 145.162 20.7933C144.831 20.3664 144.349 20.0584 143.78 19.9737C142.601 19.7972 141.504 20.624 141.335 21.8183L139.529 34.3055C139.267 36.078 137.757 37.3966 135.983 37.3966C133.337 37.3966 132.296 34.9377 132.398 33.7794C132.412 33.6029 132.412 33.4192 132.437 33.2354L133.989 22.4542C134.16 21.2599 133.347 20.1484 132.168 19.9773C131.171 19.8296 130.241 20.4006 129.871 21.3013C129.599 21.1068 128.082 20.0079 125.92 20.0079C124.253 20.0079 122.733 20.6222 121.435 21.5085C119.482 22.8505 117.926 24.8212 116.786 27.0153C115.657 29.213 114.942 31.643 114.935 34.037C114.935 35.4007 115.179 36.7679 115.803 38.0289C116.42 39.2863 118.332 41.8442 121.906 41.8442C125.669 41.8442 128.333 38.753 129.138 37.7569C129.48 38.3603 131.496 41.774 135.979 41.774C139.891 41.774 143.215 38.8737 143.793 34.9503L144.856 27.8853V27.8637C144.982 26.9702 146.057 24.3601 148.475 24.3276C151.059 24.2916 152.168 26.8423 152.06 27.9448L150.54 38.7603C150.362 39.9546 151.171 41.0696 152.35 41.2498C153.529 41.4299 154.629 40.6103 154.807 39.416C154.807 39.416 156.379 28.3393 156.379 27.9466C156.379 25.7741 155.508 23.7746 154.089 22.3263V22.3227L154.085 22.3191ZM127.961 31.0972C127.355 32.8283 126.314 34.545 125.153 35.7213C124.577 36.314 123.274 37.4669 121.913 37.4669C120.791 37.4669 119.939 36.6797 119.664 36.051C119.413 35.4817 119.26 34.8675 119.26 34.0298C119.26 33.0553 119.473 31.897 119.881 30.7441C120.487 29.013 121.527 27.2963 122.688 26.12C123.265 25.5273 124.604 24.3745 125.928 24.3745C127.177 24.3745 127.924 25.2896 128.178 25.7903C128.432 26.2821 128.582 26.9738 128.582 27.8115C128.582 28.786 128.368 29.9443 127.961 31.0972Z" fill="#ffffff"/>
+                    <path d="M156.175 38.5262V38.1803H158.613V38.5262H157.597V41.2679H157.19V38.5262H156.175Z" fill="#ffffff"/>
+                    <path d="M159.518 38.1803L160.48 40.7761L161.445 38.1803H162V41.2679H161.616V38.6991H161.609L160.658 41.2679H160.313L159.361 38.6991H159.354V41.2679H158.97V38.1803H159.525H159.518Z" fill="#ffffff"/>
+                </svg>
+            </div>
+            <h1 id="formTitle">Purchase Order Form</h1>
+            <p>Submit your purchase order details below.</p>
+        </div>
+
+        <div id="statusBanner" class="status-banner"></div>
+
+        <form id="poForm" class="form-body">
+            <div class="section-label">Account &amp; Contact (pre-filled)</div>
+            <div class="prefill-grid">
+                <div class="prefill-item">
+                    <label>Account</label>
+                    <span id="pf-account">—</span>
+                </div>
+                <div class="prefill-item">
+                    <label>Account Phone</label>
+                    <span id="pf-account-phone">—</span>
+                </div>
+                <div class="prefill-item">
+                    <label>Contact</label>
+                    <span id="pf-contact">—</span>
+                </div>
+                <div class="prefill-item">
+                    <label>Email</label>
+                    <span id="pf-email">—</span>
+                </div>
+            </div>
+
+            <div class="section-label">Purchase Order Details</div>
+
+            <div class="field-group">
+                <label>PO Number <span class="required">*</span></label>
+                <input type="text" id="po_number" name="po_number" placeholder="e.g. PO-2026-001" required>
+                <div class="field-error" id="po_number_error">PO Number is required.</div>
+            </div>
+
+            <div class="field-group">
+                <label>PO Date</label>
+                <input type="date" id="po_date" name="po_date">
+            </div>
+
+            <div class="field-group">
+                <label>Total Amount</label>
+                <input type="number" id="total_amount" name="total_amount" step="0.01" min="0" placeholder="0.00">
+            </div>
+
+            <div class="field-group">
+                <label>Notes</label>
+                <textarea id="notes" name="notes" placeholder="Any additional details..."></textarea>
+            </div>
+
+            <button type="submit" class="btn-submit" id="submitBtn">Submit Purchase Order</button>
+        </form>
+    </div>
+
+    <!-- Success state -->
+    <div id="successState" style="display:none;">
+        <div class="form-header">
+            <div class="logo">
+                <svg xmlns="http://www.w3.org/2000/svg" width="162" height="60" viewBox="0 0 162 60" fill="none">
+                    <path d="M112.525 20.0157C111.524 19.8535 110.576 20.4246 110.199 21.3325C109.913 21.1235 108.389 20.0048 106.196 20.0048C104.53 20.0048 103.01 20.6191 101.712 21.5054C99.7592 22.8474 98.2032 24.8181 97.0634 27.0122C95.9342 29.2099 95.2193 31.6399 95.2122 34.034C95.2122 34.4159 95.2371 34.7978 95.278 35.1778C95.278 35.1778 94.3497 37.4746 91.8922 37.4746C90.6954 37.4746 88.437 36.6694 88.3072 33.8574C88.3001 33.6809 88.3499 33.1891 88.3552 33.1261L89.9041 22.4944C90.0784 21.3 89.2622 20.1886 88.0867 20.0139C86.9077 19.8373 85.8106 20.6642 85.6381 21.8549L83.8136 34.3798C83.5522 36.156 82.0425 37.5088 80.2678 37.471C77.5452 37.4188 76.5708 34.8284 76.6828 33.8538C76.7041 33.6773 76.697 33.4936 76.7219 33.3098C76.7219 33.299 80.4847 7.75729 80.4847 7.75729C80.659 6.56298 79.8499 5.45153 78.6709 5.27319C77.4919 5.09666 76.3947 5.91628 76.2187 7.1106L72.2052 34.3384C71.9437 36.1182 70.434 37.4368 68.6593 37.4332C67.523 37.4332 65.1402 36.5847 65.0744 33.816C65.0744 33.6755 65.0886 33.5332 65.1064 33.3891L68.8763 7.75549C69.0505 6.56118 68.2379 5.44973 67.0624 5.27139C65.8835 5.09486 64.7863 5.91809 64.6102 7.1088L60.6038 34.3366C60.3424 36.1164 58.8327 37.4458 57.058 37.4314C54.8298 37.4134 53.4588 35.5453 53.473 33.8142C53.473 33.6593 53.4873 33.499 53.5086 33.3368L55.077 22.4889C55.2513 21.2946 54.4351 20.1832 53.2561 20.0121C52.0771 19.8355 50.9799 20.6624 50.811 21.8567L49.0043 34.3438C48.7429 36.1164 47.114 37.498 45.4584 37.435C42.5812 37.3251 41.7935 34.8284 41.8735 33.8178C41.8877 33.6413 41.8877 33.4575 41.9126 33.2738L43.465 22.4925C43.6357 21.2982 42.8231 20.1868 41.6441 20.0157C40.4651 19.8427 39.3679 20.666 39.199 21.8603L37.6466 32.6379C37.5879 33.0306 37.5594 33.4287 37.5594 33.8214C37.5594 35.9939 38.4308 37.9934 39.8498 39.4417C41.2618 40.8936 43.257 41.8123 45.4602 41.8087C47.7364 41.8087 49.8081 40.8234 51.2591 39.2273C51.3249 39.2976 53.3486 41.8087 57.058 41.8087C59.3342 41.8087 61.4058 40.8234 62.8569 39.2273C62.9227 39.2976 64.9943 41.8087 68.6558 41.8087C70.9266 41.8087 72.9929 40.827 74.444 39.2435C74.5133 39.321 76.5743 41.8465 80.2606 41.8465C82.5439 41.8465 84.6227 40.854 86.0738 39.2508C86.1431 39.3246 88.1934 41.8465 91.8833 41.8465C93.9407 41.8465 95.8239 41.0305 97.243 39.6993C97.7622 40.2469 99.4391 41.8429 102.174 41.8429C104.909 41.8429 107.014 40.083 107.189 39.9497L106.502 44.2874C99.6329 43.457 95.8915 46.0852 94.4831 47.4002C90.6759 50.9705 91.3143 55.4145 92.8471 57.3402C93.8412 58.5903 94.8494 59.3181 96.3485 59.7288C98.2939 60.262 100.623 60.044 102.796 58.7651C102.839 58.7398 107.71 56.0306 109.84 49.4357C110.269 49.5672 110.587 49.6861 110.758 49.751C111.871 50.1851 113.116 49.6195 113.544 48.4936C113.973 47.366 113.414 46.105 112.303 45.6709C111.979 45.5466 111.428 45.3556 110.731 45.1485L114.302 22.5196C114.49 21.3289 113.688 20.2066 112.513 20.0157L112.527 20.0121L112.525 20.0157ZM103.037 52.8692C100.62 55.5676 99.1617 55.6307 98.4024 55.6217C97.9205 55.6217 96.9584 55.5406 96.3343 54.7462C95.6443 53.8671 96.0978 52.5287 96.3556 52.0045C96.6099 51.4785 96.9833 50.9939 97.3319 50.6877C98.2566 49.8681 99.3022 49.3313 100.438 48.9818C101.571 48.6359 102.793 48.4936 103.999 48.4936C104.532 48.4936 105.058 48.526 105.571 48.5783C104.907 50.4085 103.959 51.8352 103.035 52.8674H103.038L103.037 52.8692ZM108.233 31.0995C107.626 32.8307 106.586 34.5474 105.425 35.7237C104.849 36.3163 103.545 37.4692 102.185 37.4692C101.063 37.4692 100.211 36.682 99.9352 36.0533C99.6845 35.4841 99.5316 34.8698 99.5316 34.0322C99.5316 33.0576 99.745 31.8993 100.152 30.7465C100.759 29.0153 101.799 27.2986 102.96 26.1223C103.536 25.5297 104.875 24.3768 106.2 24.3768C107.448 24.3768 108.195 25.2919 108.45 25.7927C108.704 26.2844 108.853 26.9762 108.853 27.8138C108.853 28.7884 108.64 29.9466 108.233 31.0995Z" fill="#ffffff"/>
+                    <path d="M88.8532 17.6869C90.4727 17.6869 91.7856 16.357 91.7856 14.7164C91.7856 13.0759 90.4727 11.746 88.8532 11.746C87.2338 11.746 85.9209 13.0759 85.9209 14.7164C85.9209 16.357 87.2338 17.6869 88.8532 17.6869Z" fill="#ffffff"/>
+                    <path d="M34.5497 29.7481C33.5556 29.087 32.2166 29.3662 31.564 30.3768C30.2001 32.4826 26.1563 37.4346 19.0451 37.4346C14.9693 37.4346 11.3044 35.7701 8.62986 33.0645C5.96248 30.3588 4.31938 26.6426 4.31582 22.5138C4.31582 18.3851 5.95893 14.6724 8.62986 11.9631C11.3008 9.26108 15.3285 7.39666 19.5679 7.61823C19.1216 12.2676 20.08 15.4524 21.4724 17.805C23.9406 21.9626 28.8273 23.7748 32.4851 21.1177C35.5224 18.9129 35.6344 14.912 34.3398 11.9019C33.3992 9.71503 31.2368 7.78396 30.3334 7.0526C27.6269 4.86212 24.6395 4.0533 24.6395 4.0533C24.7924 3.54171 24.9222 3.16342 24.9951 2.96888C25.4237 1.84121 24.8653 0.580251 23.7539 0.146119C22.6407 -0.288012 21.3959 0.27762 20.9674 1.40348C20.8251 1.77817 20.6046 2.43207 20.3681 3.28232C8.85748 2.50772 0 11.7794 0 22.5174C0 33.2554 8.52495 41.8048 19.0398 41.8048C28.2707 41.8048 33.4418 35.4297 35.1667 32.7727C35.8194 31.7657 35.5437 30.4092 34.5461 29.7481H34.5497ZM23.8233 8.38021C23.9495 8.42344 26.8712 9.33314 29.2558 12.0046C31.756 14.8093 30.602 17.1331 29.9316 17.5997C28.5819 18.5364 26.7058 17.5042 25.9216 16.5855C25.1374 15.6668 24.5968 14.586 24.2376 13.4385C23.5441 11.2174 23.7841 8.85758 23.8233 8.38021Z" fill="#ffffff"/>
+                    <path d="M154.085 22.3191C152.673 20.8672 150.678 19.9521 148.475 19.9521C146.554 19.9521 145.299 20.7249 145.162 20.7933C144.831 20.3664 144.349 20.0584 143.78 19.9737C142.601 19.7972 141.504 20.624 141.335 21.8183L139.529 34.3055C139.267 36.078 137.757 37.3966 135.983 37.3966C133.337 37.3966 132.296 34.9377 132.398 33.7794C132.412 33.6029 132.412 33.4192 132.437 33.2354L133.989 22.4542C134.16 21.2599 133.347 20.1484 132.168 19.9773C131.171 19.8296 130.241 20.4006 129.871 21.3013C129.599 21.1068 128.082 20.0079 125.92 20.0079C124.253 20.0079 122.733 20.6222 121.435 21.5085C119.482 22.8505 117.926 24.8212 116.786 27.0153C115.657 29.213 114.942 31.643 114.935 34.037C114.935 35.4007 115.179 36.7679 115.803 38.0289C116.42 39.2863 118.332 41.8442 121.906 41.8442C125.669 41.8442 128.333 38.753 129.138 37.7569C129.48 38.3603 131.496 41.774 135.979 41.774C139.891 41.774 143.215 38.8737 143.793 34.9503L144.856 27.8853V27.8637C144.982 26.9702 146.057 24.3601 148.475 24.3276C151.059 24.2916 152.168 26.8423 152.06 27.9448L150.54 38.7603C150.362 39.9546 151.171 41.0696 152.35 41.2498C153.529 41.4299 154.629 40.6103 154.807 39.416C154.807 39.416 156.379 28.3393 156.379 27.9466C156.379 25.7741 155.508 23.7746 154.089 22.3263V22.3227L154.085 22.3191ZM127.961 31.0972C127.355 32.8283 126.314 34.545 125.153 35.7213C124.577 36.314 123.274 37.4669 121.913 37.4669C120.791 37.4669 119.939 36.6797 119.664 36.051C119.413 35.4817 119.26 34.8675 119.26 34.0298C119.26 33.0553 119.473 31.897 119.881 30.7441C120.487 29.013 121.527 27.2963 122.688 26.12C123.265 25.5273 124.604 24.3745 125.928 24.3745C127.177 24.3745 127.924 25.2896 128.178 25.7903C128.432 26.2821 128.582 26.9738 128.582 27.8115C128.582 28.786 128.368 29.9443 127.961 31.0972Z" fill="#ffffff"/>
+                    <path d="M156.175 38.5262V38.1803H158.613V38.5262H157.597V41.2679H157.19V38.5262H156.175Z" fill="#ffffff"/>
+                    <path d="M159.518 38.1803L160.48 40.7761L161.445 38.1803H162V41.2679H161.616V38.6991H161.609L160.658 41.2679H160.313L159.361 38.6991H159.354V41.2679H158.97V38.1803H159.525H159.518Z" fill="#ffffff"/>
+                </svg>
+            </div>
+            <h1>Thank You</h1>
+            <p>Your purchase order has been submitted.</p>
+        </div>
+        <div class="form-body" style="text-align:center; padding:3rem 2.5rem;">
+            <div style="font-size:3rem; margin-bottom:1rem;">&#10003;</div>
+            <p style="font-size:1.1rem; color:#276749; font-weight:600; margin-bottom:0.5rem;">
+                Purchase order received successfully.
+            </p>
+            <p style="color:#718096;">
+                Reference: <strong id="successRef">—</strong>
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const SF_BASE = 'https://wluk--ashkay.sandbox.my.salesforce-sites.com';
+    const CONFIG_URL = SF_BASE + '/services/apexrest/cf/config';
+    const SUBMIT_URL = SF_BASE + '/services/apexrest/cf/submit/po-form-mvp';
+
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    const preview = params.get('preview') === '1';
+
+    const $loading   = document.getElementById('loadingState');
+    const $error     = document.getElementById('errorState');
+    const $errorMsg  = document.getElementById('errorMessage');
+    const $content   = document.getElementById('formContent');
+    const $success   = document.getElementById('successState');
+    const $form      = document.getElementById('poForm');
+    const $submitBtn = document.getElementById('submitBtn');
+    const $banner    = document.getElementById('statusBanner');
+
+    function showError(msg) {
+        $loading.style.display = 'none';
+        $content.style.display = 'none';
+        $error.style.display = 'flex';
+        $errorMsg.textContent = msg;
+    }
+
+    function showBanner(msg, isError) {
+        $banner.textContent = msg;
+        $banner.className = 'status-banner ' + (isError ? 'error-banner' : 'success-banner');
+    }
+
+    if (preview) {
+        document.getElementById('pf-account').textContent      = 'Test Acc0 Placeholder1';
+        document.getElementById('pf-account-phone').textContent = '555-1234';
+        document.getElementById('pf-contact').textContent       = 'Uat Acrtester';
+        document.getElementById('pf-email').textContent          = 'uat.acrtester@test.com';
+        $loading.style.display = 'none';
+        $content.style.display = 'block';
+    } else if (!token) {
+        showError('No token provided. Please use the link you received.');
+        return;
+    } else {
+
+    fetch(CONFIG_URL + '?token=' + encodeURIComponent(token), {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+    })
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+        if (!data.success) {
+            showError(data.message || 'This link is invalid or has expired.');
+            return;
+        }
+
+        var pf = data.prefill || {};
+        document.getElementById('pf-account').textContent      = pf.account_name || '—';
+        document.getElementById('pf-account-phone').textContent = pf.account_phone || '—';
+        document.getElementById('pf-contact').textContent       = pf.contact_name || '—';
+        document.getElementById('pf-email').textContent          = pf.contact_email || '—';
+
+        if (data.formName) {
+            document.getElementById('formTitle').textContent = data.formName;
+        }
+
+        $loading.style.display = 'none';
+        $content.style.display = 'block';
+    })
+    .catch(function () {
+        showError('Could not connect to Salesforce. Please try again later.');
+    });
+
+    } // end else
+
+    $form.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        document.querySelectorAll('.field-error').forEach(function (el) { el.style.display = 'none'; });
+        document.querySelectorAll('.error').forEach(function (el) { el.classList.remove('error'); });
+
+        var poNumber = document.getElementById('po_number').value.trim();
+        if (!poNumber) {
+            document.getElementById('po_number').classList.add('error');
+            document.getElementById('po_number_error').style.display = 'block';
+            return;
+        }
+
+        $submitBtn.disabled = true;
+        $submitBtn.textContent = 'Submitting...';
+        $banner.className = 'status-banner';
+
+        var payload = {
+            data: {
+                _token: token,
+                po_number: poNumber,
+                po_date: document.getElementById('po_date').value || null,
+                total_amount: parseFloat(document.getElementById('total_amount').value) || null,
+                notes: document.getElementById('notes').value.trim() || null,
+                contact_email: document.getElementById('pf-email').textContent
+            }
+        };
+
+        fetch(SUBMIT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+            if (data.success) {
+                $content.style.display = 'none';
+                $success.style.display = 'block';
+                document.getElementById('successRef').textContent = data.reference || '';
+            } else {
+                showBanner(data.message || 'Submission failed. Please try again.', true);
+                $submitBtn.disabled = false;
+                $submitBtn.textContent = 'Submit Purchase Order';
+            }
+        })
+        .catch(function () {
+            showBanner('Network error. Please check your connection and try again.', true);
+            $submitBtn.disabled = false;
+            $submitBtn.textContent = 'Submit Purchase Order';
+        });
+    });
+})();
+</script>
+</body>
+</html>
