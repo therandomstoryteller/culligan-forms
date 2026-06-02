@@ -387,13 +387,13 @@
                 </div>
             </div>
 
-            <div class="section-label">Upload PO (Optional — auto-fills fields below)</div>
+            <div class="section-label">Upload Document (Optional — auto-fills fields below)</div>
 
             <div class="ocr-section" id="ocrDropzone">
                 <div class="ocr-icon">&#128196;</div>
-                <div class="ocr-title">Drop your PO PDF here or click to upload</div>
-                <div class="ocr-subtitle">Supports digital and scanned PDFs (max 10MB)</div>
-                <input type="file" id="pdfFileInput" accept="application/pdf">
+                <div class="ocr-title">Drop your file here or click to upload</div>
+                <div class="ocr-subtitle">Supports PDF, Word (.docx), and images (JPG, PNG) — max 10MB</div>
+                <input type="file" id="pdfFileInput" accept="application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png,image/tiff,image/webp">
                 <div class="ocr-progress" id="ocrProgress">
                     <div class="progress-bar"><div class="progress-fill" id="ocrProgressFill"></div></div>
                     <div class="progress-text" id="ocrProgressText">Preparing...</div>
@@ -463,6 +463,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
 <script>
 (function () {
     const SF_BASE = 'https://wluk--ashkay.sandbox.my.salesforce-sites.com';
@@ -559,10 +560,10 @@
         e.preventDefault();
         $dropzone.classList.remove('dragover');
         var file = e.dataTransfer.files[0];
-        if (file && file.type === 'application/pdf') processPDF(file);
+        if (file) processFile(file);
     });
     $fileInput.addEventListener('change', function () {
-        if ($fileInput.files[0]) processPDF($fileInput.files[0]);
+        if ($fileInput.files[0]) processFile($fileInput.files[0]);
     });
 
     function updateProgress(pct, msg) {
@@ -578,35 +579,42 @@
         $ocrResultText.textContent = text;
     }
 
-    async function processPDF(file) {
+    function getFileType(file) {
+        var name = file.name.toLowerCase();
+        var type = file.type;
+        if (type === 'application/pdf' || name.endsWith('.pdf')) return 'pdf';
+        if (type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || name.endsWith('.docx')) return 'docx';
+        if (type.startsWith('image/') || /\.(jpe?g|png|tiff?|webp|bmp)$/.test(name)) return 'image';
+        return 'unknown';
+    }
+
+    async function processFile(file) {
         if (file.size > 10 * 1024 * 1024) {
-            showOcrResult('File too large', 'Please upload a PDF under 10MB.', true);
+            showOcrResult('File too large', 'Please upload a file under 10MB.', true);
+            return;
+        }
+
+        var fileType = getFileType(file);
+        if (fileType === 'unknown') {
+            showOcrResult('Unsupported file type', 'Please upload a PDF, Word (.docx), or image (JPG/PNG).', true);
             return;
         }
 
         $ocrResult.style.display = 'none';
-        updateProgress(5, 'Reading PDF...');
+        updateProgress(5, 'Reading file...');
 
         try {
-            var arrayBuffer = await file.arrayBuffer();
-            var pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-
-            updateProgress(15, 'Extracting text from PDF...');
-
-            // Step 1: Try direct text extraction (works for digital/text-based PDFs)
-            var directText = await extractDirectText(pdf);
-
             var extractedText = '';
-            if (directText.trim().length > 30) {
-                updateProgress(80, 'Text extracted — parsing fields...');
-                extractedText = directText;
-            } else {
-                // Step 2: Fall back to OCR for scanned/image-based PDFs
-                updateProgress(25, 'Scanned PDF detected — starting OCR (this may take a moment)...');
-                extractedText = await ocrFromPdf(pdf);
+
+            if (fileType === 'pdf') {
+                extractedText = await processPDF(file);
+            } else if (fileType === 'docx') {
+                extractedText = await processDocx(file);
+            } else if (fileType === 'image') {
+                extractedText = await processImage(file);
             }
 
-            updateProgress(90, 'Parsing PO fields...');
+            updateProgress(90, 'Parsing fields...');
             var fields = parseFields(extractedText);
             autofillFields(fields);
             updateProgress(100, 'Done!');
@@ -615,7 +623,7 @@
             if (filledCount === 0) {
                 showOcrResult(
                     'Could not extract fields',
-                    'The PDF format was not recognized. Please enter the values manually.',
+                    'The document format was not recognized. Please enter the values manually.',
                     true
                 );
             } else {
@@ -628,8 +636,52 @@
         } catch (err) {
             updateProgress(0, '');
             $ocrProgress.style.display = 'none';
-            showOcrResult('Error processing PDF', err.message || 'An unexpected error occurred.', true);
+            showOcrResult('Error processing file', err.message || 'An unexpected error occurred.', true);
         }
+    }
+
+    async function processPDF(file) {
+        var arrayBuffer = await file.arrayBuffer();
+        var pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+        updateProgress(15, 'Extracting text from PDF...');
+        var directText = await extractDirectText(pdf);
+
+        if (directText.trim().length > 30) {
+            updateProgress(80, 'Text extracted — parsing fields...');
+            return directText;
+        } else {
+            updateProgress(25, 'Scanned PDF detected — starting OCR...');
+            return await ocrFromPdf(pdf);
+        }
+    }
+
+    async function processDocx(file) {
+        updateProgress(15, 'Reading Word document...');
+        var arrayBuffer = await file.arrayBuffer();
+        var result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+        updateProgress(80, 'Text extracted from Word document...');
+        return result.value;
+    }
+
+    async function processImage(file) {
+        updateProgress(15, 'Preparing image for OCR...');
+        var imageUrl = URL.createObjectURL(file);
+
+        updateProgress(25, 'Running OCR on image...');
+        var worker = await Tesseract.createWorker('eng', 1, {
+            logger: function (m) {
+                if (m.status === 'recognizing text') {
+                    var pct = Math.round(25 + m.progress * 55);
+                    updateProgress(pct, 'Recognizing text... ' + Math.round(m.progress * 100) + '%');
+                }
+            }
+        });
+
+        var result = await worker.recognize(imageUrl);
+        await worker.terminate();
+        URL.revokeObjectURL(imageUrl);
+        return result.data.text;
     }
 
     async function extractDirectText(pdf) {
@@ -675,11 +727,13 @@
         var totalAmount = null;
         var notes = null;
 
-        // PO Number patterns
+        // PO/PCR Number patterns
         var poPatterns = [
+            /(?:Purchase\s*Credit\s*Request\s*No\.?)\s*[:\-]?\s*([A-Za-z0-9\-\/]+)/i,
             /(?:P\.?O\.?\s*#?|Purchase\s*Order\s*(?:#|No\.?|Number)?)\s*[:\-]?\s*([A-Za-z0-9\-\/]+)/i,
-            /(?:Order\s*(?:#|No\.?|Number))\s*[:\-]?\s*([A-Za-z0-9\-\/]+)/i,
-            /(?:PO)\s*[:\-]?\s*([A-Za-z0-9\-\/]{3,})/i
+            /(?:Order\s*(?:#|No\.?|Number)|Invoice|Original\s*Order)\s*[:\-]?\s*([A-Za-z0-9\-\/]+)/i,
+            /(?:PCR|PO)\s*[:\-]?\s*([A-Za-z0-9\-\/]{3,})/i,
+            /(?:Credit\s*(?:Request|Note)\s*(?:#|No\.?|Number)?)\s*[:\-]?\s*([A-Za-z0-9\-\/]+)/i
         ];
         for (var i = 0; i < poPatterns.length; i++) {
             var m = text.match(poPatterns[i]);
@@ -703,8 +757,8 @@
 
         // Amount patterns
         var amountPatterns = [
-            /(?:Total|Grand\s*Total|Amount\s*Due|Net\s*Amount|Total\s*Amount)\s*[:\-]?\s*\$?\s*([\d,]+\.?\d*)/i,
-            /\$\s*([\d,]+\.\d{2})/
+            /(?:Totals?|Grand\s*Total|Amount\s*Due|Net\s*Amount|Total\s*Amount|Sub\s*Total)\s*[:\-]?\s*[\$\£\€]?\s*([\d,]+\.?\d*)/i,
+            /[\$\£\€]\s*([\d,]+\.\d{2})/
         ];
         for (var k = 0; k < amountPatterns.length; k++) {
             var am = text.match(amountPatterns[k]);
@@ -715,13 +769,20 @@
             }
         }
 
-        // Notes patterns
+        // Notes/Reason patterns
         var notesPatterns = [
+            /(?:Reason)\s*[:\-]?\s*(.{3,200})/i,
             /(?:Notes?|Comments?|Remarks?|Special\s*Instructions?|Memo)\s*[:\-]?\s*(.{5,200})/i
         ];
         for (var n = 0; n < notesPatterns.length; n++) {
             var nm = text.match(notesPatterns[n]);
-            if (nm) { notes = nm[1].trim().substring(0, 200); break; }
+            if (nm) {
+                var noteVal = nm[1].trim();
+                if (noteVal.length > 2 && !/^Product\s*Code/i.test(noteVal)) {
+                    notes = noteVal.substring(0, 200);
+                    break;
+                }
+            }
         }
 
         return { poNumber: poNumber, poDate: poDate, totalAmount: totalAmount, notes: notes };
