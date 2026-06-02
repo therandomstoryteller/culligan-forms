@@ -206,6 +206,126 @@
         .error-page h2 { color: #c53030; margin-bottom: 0.5rem; }
         .error-page p { color: #718096; }
 
+        /* OCR Upload Section */
+        .ocr-section {
+            background: #f7fafc;
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            position: relative;
+        }
+
+        .ocr-section:hover,
+        .ocr-section.dragover {
+            border-color: #2968fe;
+            background: #ebf4ff;
+        }
+
+        .ocr-section .ocr-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .ocr-section .ocr-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 0.25rem;
+        }
+
+        .ocr-section .ocr-subtitle {
+            font-size: 0.8rem;
+            color: #718096;
+        }
+
+        .ocr-section input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .ocr-progress {
+            display: none;
+            margin-top: 1rem;
+        }
+
+        .ocr-progress .progress-bar {
+            background: #e2e8f0;
+            border-radius: 4px;
+            height: 8px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .ocr-progress .progress-fill {
+            background: linear-gradient(90deg, #2968fe, #1a4fd4);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s;
+            border-radius: 4px;
+        }
+
+        .ocr-progress .progress-text {
+            font-size: 0.75rem;
+            color: #718096;
+        }
+
+        .ocr-result {
+            display: none;
+            margin-top: 1rem;
+            padding: 0.75rem 1rem;
+            background: #f0fff4;
+            border: 1px solid #c6f6d5;
+            border-radius: 6px;
+            text-align: left;
+        }
+
+        .ocr-result.ocr-warning {
+            background: #fffbeb;
+            border-color: #fde68a;
+        }
+
+        .ocr-result .ocr-result-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #276749;
+            margin-bottom: 0.25rem;
+        }
+
+        .ocr-result.ocr-warning .ocr-result-title {
+            color: #92400e;
+        }
+
+        .ocr-result .ocr-result-text {
+            font-size: 0.75rem;
+            color: #4a5568;
+        }
+
+        .ocr-or-divider {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            color: #a0aec0;
+            font-size: 0.8rem;
+        }
+
+        .ocr-or-divider::before,
+        .ocr-or-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e2e8f0;
+        }
+
+        .ocr-or-divider span {
+            padding: 0 0.75rem;
+        }
+
         @media (max-width: 480px) {
             .prefill-grid { grid-template-columns: 1fr; }
             .form-body, .form-header { padding: 1.5rem; }
@@ -267,6 +387,25 @@
                 </div>
             </div>
 
+            <div class="section-label">Upload PO (Optional — auto-fills fields below)</div>
+
+            <div class="ocr-section" id="ocrDropzone">
+                <div class="ocr-icon">&#128196;</div>
+                <div class="ocr-title">Drop your PO PDF here or click to upload</div>
+                <div class="ocr-subtitle">Supports digital and scanned PDFs (max 10MB)</div>
+                <input type="file" id="pdfFileInput" accept="application/pdf">
+                <div class="ocr-progress" id="ocrProgress">
+                    <div class="progress-bar"><div class="progress-fill" id="ocrProgressFill"></div></div>
+                    <div class="progress-text" id="ocrProgressText">Preparing...</div>
+                </div>
+                <div class="ocr-result" id="ocrResult">
+                    <div class="ocr-result-title" id="ocrResultTitle"></div>
+                    <div class="ocr-result-text" id="ocrResultText"></div>
+                </div>
+            </div>
+
+            <div class="ocr-or-divider"><span>OR enter manually</span></div>
+
             <div class="section-label">Purchase Order Details</div>
 
             <div class="field-group">
@@ -322,11 +461,15 @@
     </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
 (function () {
     const SF_BASE = 'https://wluk--ashkay.sandbox.my.salesforce-sites.com';
     const CONFIG_URL = SF_BASE + '/services/apexrest/cf/config';
     const SUBMIT_URL = SF_BASE + '/services/apexrest/cf/submit/po-form-mvp';
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
     const params = new URLSearchParams(window.location.search);
     const token = params.get('token');
@@ -394,6 +537,228 @@
     });
 
     } // end else
+
+    // ===== OCR LOGIC =====
+    var $dropzone     = document.getElementById('ocrDropzone');
+    var $fileInput    = document.getElementById('pdfFileInput');
+    var $ocrProgress  = document.getElementById('ocrProgress');
+    var $ocrFill      = document.getElementById('ocrProgressFill');
+    var $ocrText      = document.getElementById('ocrProgressText');
+    var $ocrResult    = document.getElementById('ocrResult');
+    var $ocrResultTitle = document.getElementById('ocrResultTitle');
+    var $ocrResultText  = document.getElementById('ocrResultText');
+
+    $dropzone.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        $dropzone.classList.add('dragover');
+    });
+    $dropzone.addEventListener('dragleave', function () {
+        $dropzone.classList.remove('dragover');
+    });
+    $dropzone.addEventListener('drop', function (e) {
+        e.preventDefault();
+        $dropzone.classList.remove('dragover');
+        var file = e.dataTransfer.files[0];
+        if (file && file.type === 'application/pdf') processPDF(file);
+    });
+    $fileInput.addEventListener('change', function () {
+        if ($fileInput.files[0]) processPDF($fileInput.files[0]);
+    });
+
+    function updateProgress(pct, msg) {
+        $ocrProgress.style.display = 'block';
+        $ocrFill.style.width = pct + '%';
+        $ocrText.textContent = msg;
+    }
+
+    function showOcrResult(title, text, isWarning) {
+        $ocrResult.style.display = 'block';
+        $ocrResult.className = 'ocr-result' + (isWarning ? ' ocr-warning' : '');
+        $ocrResultTitle.textContent = title;
+        $ocrResultText.textContent = text;
+    }
+
+    async function processPDF(file) {
+        if (file.size > 10 * 1024 * 1024) {
+            showOcrResult('File too large', 'Please upload a PDF under 10MB.', true);
+            return;
+        }
+
+        $ocrResult.style.display = 'none';
+        updateProgress(5, 'Reading PDF...');
+
+        try {
+            var arrayBuffer = await file.arrayBuffer();
+            var pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+            updateProgress(15, 'Extracting text from PDF...');
+
+            // Step 1: Try direct text extraction (works for digital/text-based PDFs)
+            var directText = await extractDirectText(pdf);
+
+            var extractedText = '';
+            if (directText.trim().length > 30) {
+                updateProgress(80, 'Text extracted — parsing fields...');
+                extractedText = directText;
+            } else {
+                // Step 2: Fall back to OCR for scanned/image-based PDFs
+                updateProgress(25, 'Scanned PDF detected — starting OCR (this may take a moment)...');
+                extractedText = await ocrFromPdf(pdf);
+            }
+
+            updateProgress(90, 'Parsing PO fields...');
+            var fields = parseFields(extractedText);
+            autofillFields(fields);
+            updateProgress(100, 'Done!');
+
+            var filledCount = Object.values(fields).filter(function (v) { return v !== null; }).length;
+            if (filledCount === 0) {
+                showOcrResult(
+                    'Could not extract fields',
+                    'The PDF format was not recognized. Please enter the values manually.',
+                    true
+                );
+            } else {
+                showOcrResult(
+                    filledCount + ' of 4 fields extracted',
+                    'Please review the auto-filled values below and correct if needed.',
+                    false
+                );
+            }
+        } catch (err) {
+            updateProgress(0, '');
+            $ocrProgress.style.display = 'none';
+            showOcrResult('Error processing PDF', err.message || 'An unexpected error occurred.', true);
+        }
+    }
+
+    async function extractDirectText(pdf) {
+        var fullText = '';
+        var pageCount = Math.min(pdf.numPages, 3);
+        for (var i = 1; i <= pageCount; i++) {
+            var page = await pdf.getPage(i);
+            var content = await page.getTextContent();
+            var pageText = content.items.map(function (item) { return item.str; }).join(' ');
+            fullText += pageText + '\n';
+        }
+        return fullText;
+    }
+
+    async function ocrFromPdf(pdf) {
+        var page = await pdf.getPage(1);
+        var viewport = page.getViewport({ scale: 2.0 });
+        var canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        var ctx = canvas.getContext('2d');
+
+        await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+        updateProgress(45, 'Running OCR on page 1...');
+
+        var worker = await Tesseract.createWorker('eng', 1, {
+            logger: function (m) {
+                if (m.status === 'recognizing text') {
+                    var pct = Math.round(45 + m.progress * 35);
+                    updateProgress(pct, 'Recognizing text... ' + Math.round(m.progress * 100) + '%');
+                }
+            }
+        });
+
+        var result = await worker.recognize(canvas);
+        await worker.terminate();
+        return result.data.text;
+    }
+
+    function parseFields(text) {
+        var poNumber = null;
+        var poDate = null;
+        var totalAmount = null;
+        var notes = null;
+
+        // PO Number patterns
+        var poPatterns = [
+            /(?:P\.?O\.?\s*#?|Purchase\s*Order\s*(?:#|No\.?|Number)?)\s*[:\-]?\s*([A-Za-z0-9\-\/]+)/i,
+            /(?:Order\s*(?:#|No\.?|Number))\s*[:\-]?\s*([A-Za-z0-9\-\/]+)/i,
+            /(?:PO)\s*[:\-]?\s*([A-Za-z0-9\-\/]{3,})/i
+        ];
+        for (var i = 0; i < poPatterns.length; i++) {
+            var m = text.match(poPatterns[i]);
+            if (m) { poNumber = m[1].trim(); break; }
+        }
+
+        // Date patterns
+        var datePatterns = [
+            /(?:Date|PO\s*Date|Order\s*Date|Issued)\s*[:\-]?\s*(\d{1,2}[\/.]\d{1,2}[\/.]\d{2,4})/i,
+            /(?:Date|PO\s*Date|Order\s*Date|Issued)\s*[:\-]?\s*(\d{4}[\-\/]\d{1,2}[\-\/]\d{1,2})/i,
+            /(?:Date|PO\s*Date|Order\s*Date|Issued)\s*[:\-]?\s*(\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{2,4})/i,
+            /(?:Date|PO\s*Date|Order\s*Date|Issued)\s*[:\-]?\s*((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2},?\s+\d{2,4})/i
+        ];
+        for (var j = 0; j < datePatterns.length; j++) {
+            var dm = text.match(datePatterns[j]);
+            if (dm) {
+                poDate = normalizeDate(dm[1].trim());
+                break;
+            }
+        }
+
+        // Amount patterns
+        var amountPatterns = [
+            /(?:Total|Grand\s*Total|Amount\s*Due|Net\s*Amount|Total\s*Amount)\s*[:\-]?\s*\$?\s*([\d,]+\.?\d*)/i,
+            /\$\s*([\d,]+\.\d{2})/
+        ];
+        for (var k = 0; k < amountPatterns.length; k++) {
+            var am = text.match(amountPatterns[k]);
+            if (am) {
+                totalAmount = parseFloat(am[1].replace(/,/g, ''));
+                if (!isNaN(totalAmount)) break;
+                totalAmount = null;
+            }
+        }
+
+        // Notes patterns
+        var notesPatterns = [
+            /(?:Notes?|Comments?|Remarks?|Special\s*Instructions?|Memo)\s*[:\-]?\s*(.{5,200})/i
+        ];
+        for (var n = 0; n < notesPatterns.length; n++) {
+            var nm = text.match(notesPatterns[n]);
+            if (nm) { notes = nm[1].trim().substring(0, 200); break; }
+        }
+
+        return { poNumber: poNumber, poDate: poDate, totalAmount: totalAmount, notes: notes };
+    }
+
+    function normalizeDate(dateStr) {
+        var parsed = new Date(dateStr);
+        if (!isNaN(parsed.getTime())) {
+            return parsed.toISOString().split('T')[0];
+        }
+        var parts = dateStr.match(/(\d{1,2})[\/.](\d{1,2})[\/.](\d{2,4})/);
+        if (parts) {
+            var year = parts[3].length === 2 ? '20' + parts[3] : parts[3];
+            var month = parts[1].padStart(2, '0');
+            var day = parts[2].padStart(2, '0');
+            if (parseInt(month) > 12) { var tmp = month; month = day; day = tmp; }
+            return year + '-' + month + '-' + day;
+        }
+        return '';
+    }
+
+    function autofillFields(fields) {
+        if (fields.poNumber) {
+            document.getElementById('po_number').value = fields.poNumber;
+            document.getElementById('po_number').dispatchEvent(new Event('input'));
+        }
+        if (fields.poDate) {
+            document.getElementById('po_date').value = fields.poDate;
+        }
+        if (fields.totalAmount !== null) {
+            document.getElementById('total_amount').value = fields.totalAmount.toFixed(2);
+        }
+        if (fields.notes) {
+            document.getElementById('notes').value = fields.notes;
+        }
+    }
+    // ===== END OCR LOGIC =====
 
     $form.addEventListener('submit', function (e) {
         e.preventDefault();
