@@ -1093,27 +1093,78 @@
         btn.disabled = true;
         btn.textContent = 'Saving...';
 
-        try {
-            const formId = new URLSearchParams(window.location.search).get('formId');
-            const result = await apiCall('admin/mappings', 'POST', {
-                formId: formId,
-                token: _config.token,
-                mappings: taggedFields
-            });
+        // Try to get baseUrl from: URL param > meta tag > localStorage > prompt
+        let baseUrl = new URLSearchParams(window.location.search).get('owl_base_url')
+            || document.querySelector('meta[name="owl-base-url"]')?.content
+            || localStorage.getItem('owl_base_url')
+            || '';
 
-            if (result.success) {
-                btn.textContent = '✓ Saved ' + result.savedCount + ' mappings';
+        if (!baseUrl) {
+            baseUrl = prompt(
+                'Enter your Salesforce Site URL (e.g. https://yourdomain.my.salesforce-sites.com)\n\n' +
+                'Or click Cancel to download mappings as JSON file instead.'
+            );
+            if (baseUrl) {
+                baseUrl = baseUrl.replace(/\/+$/, '');
+                localStorage.setItem('owl_base_url', baseUrl);
+            }
+        }
+
+        const formId = new URLSearchParams(window.location.search).get('formId')
+            || new URLSearchParams(window.location.search).get('token')
+            || '';
+
+        const payload = {
+            formId: formId,
+            mappings: taggedFields
+        };
+
+        // If no baseUrl, download as JSON
+        if (!baseUrl) {
+            downloadMappingsJSON(payload);
+            btn.disabled = false;
+            btn.textContent = 'Save to Salesforce';
+            return;
+        }
+
+        _config.baseUrl = baseUrl;
+
+        try {
+            const result = await apiCall('admin/mappings', 'POST', payload);
+
+            if (result.data && result.data.success) {
+                btn.textContent = '✓ Saved ' + (result.data.savedCount || taggedFields.length) + ' mappings';
                 btn.style.background = '#4caf50';
             } else {
-                alert('Error saving: ' + (result.error || 'Unknown error'));
+                const errMsg = (result.data && result.data.error) || 'Unknown error';
+                if (confirm('Error saving to Salesforce: ' + errMsg + '\n\nDownload mappings as JSON instead?')) {
+                    downloadMappingsJSON(payload);
+                }
                 btn.disabled = false;
                 btn.textContent = 'Save to Salesforce';
             }
         } catch (err) {
-            alert('Error: ' + err.message);
+            if (confirm('Error: ' + err.message + '\n\nDownload mappings as JSON instead?')) {
+                downloadMappingsJSON(payload);
+            }
             btn.disabled = false;
             btn.textContent = 'Save to Salesforce';
         }
+    }
+
+    function downloadMappingsJSON(payload) {
+        const json = JSON.stringify(payload, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'owl-mappings-' + new Date().toISOString().slice(0, 10) + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        alert('Mappings downloaded! You can import this file in the Admin App > Form Editor > Mappings tab.');
+    }
     }
 
     // --- Public API ---
