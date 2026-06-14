@@ -880,6 +880,29 @@
 
     function enableClickToTag(taggedFields, state) {
         let lastHighlighted = null;
+        let currentElement = null;
+
+        function selectElement(el) {
+            if (lastHighlighted) lastHighlighted.style.outline = '';
+            el.style.outline = '3px solid #ff5722';
+            lastHighlighted = el;
+            currentElement = el;
+            showTagPopup(el, taggedFields, {
+                onParent: () => {
+                    if (el.parentElement && el.parentElement !== document.body) {
+                        selectElement(el.parentElement);
+                    }
+                },
+                onChild: () => {
+                    const child = el.firstElementChild;
+                    if (child) selectElement(child);
+                },
+                onNextSibling: () => {
+                    const sib = el.nextElementSibling;
+                    if (sib) selectElement(sib);
+                }
+            });
+        }
 
         document.addEventListener('click', (e) => {
             if (e.target.closest('#owl-mapper-toolbar') || e.target.closest('#owl-tag-popup')) return;
@@ -889,17 +912,21 @@
             e.preventDefault();
             e.stopPropagation();
 
-            if (lastHighlighted) {
-                lastHighlighted.style.outline = '';
+            // Get the deepest element at the exact click coordinates
+            const elements = document.elementsFromPoint(e.clientX, e.clientY);
+            let target = e.target;
+            for (const el of elements) {
+                if (el.closest('#owl-mapper-toolbar') || el.closest('#owl-tag-popup')) continue;
+                if (el === document.body || el === document.documentElement) continue;
+                target = el;
+                break;
             }
-            e.target.style.outline = '3px solid #ff5722';
-            lastHighlighted = e.target;
 
-            showTagPopup(e.target, taggedFields);
+            selectElement(target);
         }, true);
     }
 
-    function showTagPopup(element, taggedFields) {
+    function showTagPopup(element, taggedFields, nav) {
         let popup = document.getElementById('owl-tag-popup');
         if (popup) popup.remove();
 
@@ -913,12 +940,23 @@
             : tag === 'textarea' ? 'LongText'
             : 'Text';
 
+        const textPreview = (element.textContent || '').trim().substring(0, 50);
+        const childCount = element.children.length;
+        const hasParent = element.parentElement && element.parentElement !== document.body;
+        const hasSibling = !!element.nextElementSibling;
+
         popup = document.createElement('div');
         popup.id = 'owl-tag-popup';
         popup.innerHTML = `
-            <div style="position:fixed;bottom:20px;right:20px;z-index:100000;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.2);padding:20px;width:320px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-                <p style="margin:0 0 4px;font-size:12px;color:#666;">Element: <strong>${tag}</strong> ${element.id ? '(#' + element.id + ')' : ''}</p>
-                <p style="margin:0 0 12px;font-size:12px;color:#666;">Type: ${fieldType}</p>
+            <div style="position:fixed;bottom:20px;right:20px;z-index:100000;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.2);padding:20px;width:340px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+                <p style="margin:0 0 4px;font-size:12px;color:#666;">Element: <strong>&lt;${tag}&gt;</strong> ${element.className ? '.' + element.className.split(' ')[0] : ''} ${element.id ? '#' + element.id : ''}</p>
+                <p style="margin:0 0 4px;font-size:11px;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Preview: "${textPreview}${textPreview.length >= 50 ? '...' : ''}"</p>
+                <p style="margin:0 0 8px;font-size:11px;color:#999;">Children: ${childCount} | Type: ${fieldType}</p>
+                <div style="display:flex;gap:4px;margin-bottom:12px;">
+                    <button id="owl-nav-parent" style="flex:1;padding:5px;background:${hasParent ? '#e3f2fd' : '#f5f5f5'};color:${hasParent ? '#1565c0' : '#bbb'};border:1px solid ${hasParent ? '#90caf9' : '#eee'};border-radius:4px;font-size:11px;cursor:${hasParent ? 'pointer' : 'default'};" ${hasParent ? '' : 'disabled'}>↑ Parent</button>
+                    <button id="owl-nav-child" style="flex:1;padding:5px;background:${childCount ? '#e8f5e9' : '#f5f5f5'};color:${childCount ? '#2e7d32' : '#bbb'};border:1px solid ${childCount ? '#a5d6a7' : '#eee'};border-radius:4px;font-size:11px;cursor:${childCount ? 'pointer' : 'default'};" ${childCount ? '' : 'disabled'}>↓ Child</button>
+                    <button id="owl-nav-sibling" style="flex:1;padding:5px;background:${hasSibling ? '#fff3e0' : '#f5f5f5'};color:${hasSibling ? '#e65100' : '#bbb'};border:1px solid ${hasSibling ? '#ffcc80' : '#eee'};border-radius:4px;font-size:11px;cursor:${hasSibling ? 'pointer' : 'default'};" ${hasSibling ? '' : 'disabled'}>→ Sibling</button>
+                </div>
                 <label style="display:block;font-size:12px;font-weight:600;color:#333;margin-bottom:4px;">Field Key</label>
                 <input id="owl-tag-key" type="text" value="${existingKey}" placeholder="e.g. accountName" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;margin-bottom:10px;box-sizing:border-box;">
                 <label style="display:block;font-size:12px;font-weight:600;color:#333;margin-bottom:4px;">Direction</label>
@@ -934,6 +972,10 @@
             </div>
         `;
         document.body.appendChild(popup);
+
+        document.getElementById('owl-nav-parent').addEventListener('click', () => { if (nav && nav.onParent) nav.onParent(); });
+        document.getElementById('owl-nav-child').addEventListener('click', () => { if (nav && nav.onChild) nav.onChild(); });
+        document.getElementById('owl-nav-sibling').addEventListener('click', () => { if (nav && nav.onNextSibling) nav.onNextSibling(); });
 
         document.getElementById('owl-tag-add').addEventListener('click', () => {
             const key = document.getElementById('owl-tag-key').value.trim();
