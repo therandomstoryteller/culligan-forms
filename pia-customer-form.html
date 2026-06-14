@@ -1,407 +1,1311 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="owl-base-url" content="">
-    <title>Pre-Installation Assessment</title>
-    <style>
-        :root {
-            --primary: #0070d2;
-            --primary-dark: #005fb2;
-            --success: #2e844a;
-            --warning: #fe9339;
-            --error: #ea001e;
-            --gray-100: #f3f3f3;
-            --gray-200: #e5e5e5;
-            --gray-700: #3e3e3c;
-            --gray-900: #181818;
-            --radius: 8px;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="owl-base-url" content="">
+  <title>Culligan UK — Pre-Installation Assessment</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue: #2968FE;
+      --blue-light: #EBF1FF;
+      --blue-hover: #1A54E0;
+      --green: #00A651;
+      --green-light: #E6F9EF;
+      --navy: #1B2A3D;
+      --text: #334155;
+      --text-light: #64748B;
+      --text-muted: #94A3B8;
+      --bg: #F5F7FA;
+      --white: #FFFFFF;
+      --border: #E2E8F0;
+      --border-light: #F1F5F9;
+      --red: #EF4444;
+      --red-light: #FEF2F2;
+      --amber: #F59E0B;
+      --amber-light: #FFFBEB;
+      --radius: 12px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+      --shadow: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-lg: 0 4px 12px rgba(41,104,254,0.15);
+      --transition: 0.2s ease;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--gray-100);
-            color: var(--gray-900);
-            line-height: 1.6;
-        }
+    /* Progress Bar */
+    .progress-track { position: fixed; top: 0; left: 0; right: 0; height: 4px; background: var(--border); z-index: 100; }
+    .progress-fill { height: 100%; background: var(--blue); border-radius: 0 2px 2px 0; transition: width 0.5s ease; }
+    .progress-fill.complete { background: var(--green); }
 
-        .form-container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 24px;
-        }
+    /* Header */
+    .form-header {
+      padding: 20px 0 8px;
+      position: sticky; top: 4px; z-index: 50;
+      background: var(--bg);
+    }
+    .header-inner {
+      max-width: 640px; margin: 0 auto; padding: 0 20px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo { display: flex; align-items: center; text-decoration: none; }
+    .logo svg { height: 24px; width: auto; }
 
-        .form-header {
-            background: white;
-            border-radius: var(--radius);
-            padding: 32px;
-            margin-bottom: 24px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            text-align: center;
-        }
-        .form-header h1 { font-size: 24px; color: var(--primary-dark); margin-bottom: 8px; }
-        .form-header p { color: var(--gray-700); }
+    /* Step Dots */
+    .step-dots { display: flex; align-items: center; gap: 6px; }
+    .dot {
+      width: 8px; height: 8px; border-radius: var(--radius-full);
+      background: var(--border); transition: all 0.3s ease;
+    }
+    .dot.active { background: var(--blue); width: 24px; border-radius: 4px; }
+    .dot.done { background: var(--blue); }
 
-        .form-page {
-            background: white;
-            border-radius: var(--radius);
-            padding: 32px;
-            margin-bottom: 24px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        }
-        .form-page h2 {
-            font-size: 18px;
-            color: var(--primary-dark);
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid var(--gray-200);
-        }
+    /* Main Container */
+    .form-body { max-width: 640px; margin: 0 auto; padding: 16px 20px 32px; min-height: calc(100vh - 120px); }
 
-        .field-group { margin-bottom: 20px; }
-        .field-group label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 6px;
-            font-size: 14px;
-        }
-        .field-group input,
-        .field-group textarea,
-        .field-group select {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid var(--gray-200);
-            border-radius: 4px;
-            font-size: 14px;
-            transition: border-color 0.2s;
-        }
-        .field-group input:focus,
-        .field-group textarea:focus,
-        .field-group select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(0,112,210,0.1);
-        }
-        .field-group textarea { resize: vertical; min-height: 80px; }
+    /* Pages */
+    .page { display: none; opacity: 0; transition: opacity 0.35s ease; }
+    .page.active { display: block; opacity: 1; }
+    .page.fade-out { opacity: 0; }
 
-        .product-section {
-            border: 1px solid var(--gray-200);
-            border-radius: var(--radius);
-            padding: 20px;
-            margin-bottom: 20px;
-            background: var(--gray-100);
-        }
-        .product-section h3 {
-            font-size: 16px;
-            color: var(--gray-900);
-            margin-bottom: 16px;
-        }
-        .product-section .product-badge {
-            display: inline-block;
-            background: var(--primary);
-            color: white;
-            padding: 2px 10px;
-            border-radius: 12px;
-            font-size: 12px;
-            margin-left: 8px;
-        }
+    /* Typography */
+    .step-label { font-size: 11px; font-weight: 600; color: var(--blue); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px; }
+    .page-title { font-size: 22px; font-weight: 700; color: var(--navy); line-height: 1.3; margin-bottom: 6px; }
+    .page-subtitle { font-size: 14px; color: var(--text-light); margin-bottom: 24px; line-height: 1.5; }
 
-        .checkbox-group { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-        .checkbox-group input[type="checkbox"] { width: 18px; height: 18px; }
-        .checkbox-group label { margin-bottom: 0; font-weight: normal; }
+    /* Cards */
+    .card {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 24px;
+      margin-bottom: 16px; box-shadow: var(--shadow-sm);
+    }
+    .card-title {
+      font-size: 14px; font-weight: 700; color: var(--navy);
+      display: flex; align-items: center; gap: 8px; margin-bottom: 16px;
+    }
+    .card-title .material-symbols-outlined { font-size: 20px; color: var(--blue); }
 
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    /* Form fields */
+    .field { margin-bottom: 20px; }
+    .field:last-child { margin-bottom: 0; }
+    .field-label { display: block; font-size: 13px; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
+    .field-label .req { color: var(--red); margin-left: 2px; }
+    .field-hint { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+    .field-readonly {
+      background: var(--bg); border: 1px solid var(--border-light);
+      border-radius: var(--radius); padding: 10px 14px;
+      font-size: 14px; color: var(--text);
+    }
+    input[type="text"], input[type="email"], input[type="date"], textarea, select {
+      width: 100%; border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 10px 14px; font-size: 14px; font-family: inherit; color: var(--text);
+      transition: border-color var(--transition), box-shadow var(--transition);
+      outline: none; background: var(--white);
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--blue); box-shadow: 0 0 0 3px rgba(41,104,254,0.12);
+    }
+    textarea { resize: vertical; min-height: 100px; }
 
-        .btn-submit {
-            display: block;
-            width: 100%;
-            padding: 14px 24px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: var(--radius);
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .btn-submit:hover { background: var(--primary-dark); }
-        .btn-submit:disabled { background: var(--gray-200); color: var(--gray-700); cursor: not-allowed; }
+    /* Pill radios */
+    .pill-group { display: flex; flex-wrap: wrap; gap: 8px; }
+    .pill { position: relative; }
+    .pill input { position: absolute; opacity: 0; pointer-events: none; }
+    .pill label {
+      display: inline-block; border: 1px solid var(--border); border-radius: var(--radius-full);
+      padding: 8px 18px; font-size: 13px; font-weight: 500; color: var(--text);
+      cursor: pointer; transition: all var(--transition); user-select: none;
+    }
+    .pill label:hover { border-color: var(--blue); color: var(--blue); }
+    .pill input:checked + label {
+      background: var(--blue); color: white; border-color: var(--blue);
+    }
+    .pill input:focus + label { outline: 2px solid var(--blue); outline-offset: 2px; }
 
-        .nav-buttons { display: flex; gap: 12px; margin-top: 20px; }
-        .btn-nav {
-            padding: 10px 20px;
-            border: 1px solid var(--gray-200);
-            border-radius: 4px;
-            background: white;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        .btn-nav.primary { background: var(--primary); color: white; border: none; }
+    /* Day pills (smaller) */
+    .day-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+    .day-pill {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 44px; padding: 6px 12px; border-radius: var(--radius-full);
+      font-size: 12px; font-weight: 600;
+      background: var(--blue-light); color: var(--blue);
+    }
 
-        .hidden { display: none; }
+    /* Feature badges */
+    .badge {
+      display: inline-block; padding: 4px 10px; border-radius: var(--radius-full);
+      font-size: 11px; font-weight: 600;
+    }
+    .badge-hot { background: #FEE2E2; color: #DC2626; }
+    .badge-cold { background: #DBEAFE; color: #2563EB; }
+    .badge-ambient { background: #F1F5F9; color: #475569; }
+    .badge-sparkling { background: #EDE9FE; color: #7C3AED; }
+    .badge-extra-hot { background: #FEF3C7; color: #D97706; }
 
-        .progress-bar {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 24px;
-        }
-        .progress-step {
-            flex: 1;
-            height: 4px;
-            background: var(--gray-200);
-            border-radius: 2px;
-            transition: background 0.3s;
-        }
-        .progress-step.active { background: var(--primary); }
+    /* Accordion */
+    .accordion {
+      background: var(--white); border: 2px solid var(--border);
+      border-radius: var(--radius-lg); margin-bottom: 12px;
+      overflow: hidden; transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .accordion.open { border-color: var(--blue); box-shadow: var(--shadow-lg); }
+    .accordion-header {
+      width: 100%; text-align: left; padding: 16px 20px;
+      background: none; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: space-between;
+      font-family: inherit; transition: background var(--transition);
+    }
+    .accordion-header:hover { background: var(--bg); }
+    .accordion-header-left { display: flex; flex-direction: column; gap: 2px; }
+    .accordion-header-right { display: flex; align-items: center; gap: 10px; }
+    .acc-label { font-size: 11px; font-weight: 700; color: var(--blue); text-transform: uppercase; letter-spacing: 1px; }
+    .acc-title { font-size: 15px; font-weight: 700; color: var(--navy); }
+    .acc-type { font-weight: 400; color: var(--text-light); }
+    .acc-chevron {
+      font-size: 22px; color: var(--text-muted); transition: transform 0.3s ease;
+    }
+    .accordion.open .acc-chevron { transform: rotate(180deg); }
+    .accordion-body {
+      display: none; border-top: 1px solid var(--border);
+      padding: 20px; background: var(--bg);
+    }
+    .accordion.open .accordion-body { display: block; }
 
-        @media (max-width: 600px) {
-            .grid-2 { grid-template-columns: 1fr; }
-            .form-container { padding: 12px; }
-            .form-page { padding: 20px; }
-        }
-    </style>
+    /* Status badges */
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; border-radius: var(--radius-full);
+      font-size: 11px; font-weight: 600;
+    }
+    .status-pending { background: var(--amber-light); color: #92400E; }
+    .status-done { background: var(--green-light); color: #166534; }
+    .status-badge .material-symbols-outlined { font-size: 14px; }
+
+    /* Section divider inside accordion */
+    .check-section { padding-top: 20px; margin-top: 20px; border-top: 1px solid var(--border); }
+    .check-section:first-child { padding-top: 0; margin-top: 0; border-top: none; }
+    .section-title { font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
+    .section-title .material-symbols-outlined { font-size: 18px; color: var(--blue); }
+
+    /* Helper expandable */
+    .helper-box {
+      background: var(--blue-light); border-radius: var(--radius);
+      padding: 12px 14px; margin-top: 10px;
+    }
+    .helper-toggle {
+      display: flex; align-items: center; gap: 6px; width: 100%; text-align: left;
+      background: none; border: none; cursor: pointer; font-family: inherit;
+      font-size: 12px; font-weight: 600; color: var(--blue);
+    }
+    .helper-toggle .material-symbols-outlined { font-size: 16px; }
+    .helper-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+    .helper-content.open { max-height: 400px; }
+    .helper-content p { font-size: 12px; color: var(--blue); line-height: 1.5; margin-top: 8px; }
+
+    /* Photo upload dropzone */
+    .dropzone {
+      border: 2px dashed var(--border); border-radius: var(--radius);
+      padding: 28px 16px; text-align: center; cursor: pointer;
+      transition: all var(--transition); margin-top: 8px;
+    }
+    .dropzone:hover, .dropzone.dragover { border-color: var(--blue); background: var(--blue-light); }
+    .dropzone .material-symbols-outlined { font-size: 36px; color: var(--text-muted); margin-bottom: 6px; }
+    .dropzone p { font-size: 13px; color: var(--text-light); }
+    .dropzone .file-name { font-size: 12px; color: var(--blue); font-weight: 600; margin-top: 6px; }
+
+    /* Info banner */
+    .info-banner {
+      display: flex; align-items: flex-start; gap: 10px;
+      background: var(--blue-light); border-radius: var(--radius);
+      padding: 12px 16px; margin-bottom: 20px;
+    }
+    .info-banner .material-symbols-outlined { font-size: 18px; color: var(--blue); flex-shrink: 0; margin-top: 1px; }
+    .info-banner p { font-size: 13px; color: var(--blue); line-height: 1.5; }
+
+    /* Delivery callout */
+    .callout {
+      border-left: 4px solid var(--blue); background: var(--blue-light);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 16px 20px; margin-bottom: 16px;
+    }
+    .callout-title { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .callout-title .material-symbols-outlined { font-size: 20px; color: var(--blue); }
+    .callout ul { list-style: disc; margin-left: 20px; }
+    .callout li { font-size: 13px; color: var(--text); line-height: 1.6; margin-bottom: 4px; }
+
+    /* Readiness cards */
+    .readiness-option { position: relative; margin-bottom: 10px; }
+    .readiness-option input { position: absolute; opacity: 0; pointer-events: none; }
+    .readiness-option label {
+      display: flex; align-items: flex-start; gap: 12px;
+      border: 2px solid var(--border); border-radius: var(--radius);
+      padding: 14px 16px; cursor: pointer; transition: all var(--transition);
+    }
+    .readiness-option label:hover { border-color: var(--blue); }
+    .readiness-option input:checked + label { border-color: var(--blue); background: var(--blue-light); }
+    .readiness-option input:focus + label { outline: 2px solid var(--blue); outline-offset: 2px; }
+    .readiness-icon { flex-shrink: 0; margin-top: 1px; }
+    .readiness-icon.material-symbols-outlined { font-size: 24px; }
+    .readiness-label { font-size: 14px; font-weight: 600; color: var(--navy); }
+    .readiness-desc { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 11px 24px; border-radius: var(--radius-full); font-size: 14px;
+      font-weight: 600; font-family: inherit; border: none; cursor: pointer;
+      transition: all var(--transition); text-decoration: none;
+    }
+    .btn-primary { background: var(--blue); color: white; box-shadow: var(--shadow); }
+    .btn-primary:hover { background: var(--blue-hover); box-shadow: var(--shadow-lg); transform: translateY(-1px); }
+    .btn-success { background: var(--green); color: white; box-shadow: 0 4px 12px rgba(0,166,81,0.2); }
+    .btn-success:hover { background: #008F47; }
+    .btn-secondary { background: var(--white); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--bg); border-color: var(--text-muted); }
+    .btn-dark { background: var(--navy); color: white; }
+    .btn-dark:hover { background: #0F1D2E; }
+    .btn .material-symbols-outlined { font-size: 18px; }
+    .btn-lg { padding: 14px 32px; font-size: 15px; }
+
+    /* Button row */
+    .btn-row { display: flex; justify-content: space-between; align-items: center; margin-top: 28px; gap: 12px; }
+    @media (max-width: 480px) {
+      .btn-row { flex-direction: column-reverse; }
+      .btn-row .btn { width: 100%; }
+    }
+
+    /* Welcome page specific */
+    .welcome-hero { text-align: center; padding: 40px 0 24px; }
+    .welcome-icon {
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 24px;
+    }
+    .welcome-icon svg { height: 48px; width: auto; }
+    .welcome-title { font-size: 26px; font-weight: 700; color: var(--navy); margin-bottom: 10px; }
+    .welcome-subtitle { font-size: 15px; color: var(--text-light); max-width: 400px; margin: 0 auto 28px; line-height: 1.6; }
+
+    /* Expect list */
+    .expect-list { margin-top: 32px; border-top: 1px solid var(--border); padding-top: 24px; }
+    .expect-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; text-align: center; margin-bottom: 16px; }
+    .expect-item {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 12px 14px; border-radius: var(--radius); background: var(--white);
+      border: 1px solid var(--border); margin-bottom: 8px;
+    }
+    .expect-num {
+      width: 28px; height: 28px; border-radius: 8px; background: var(--blue-light);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      font-size: 12px; font-weight: 700; color: var(--blue);
+    }
+    .expect-text h4 { font-size: 13px; font-weight: 600; color: var(--navy); }
+    .expect-text p { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+
+    /* Success page */
+    .success-hero { text-align: center; padding: 48px 0 24px; }
+    .success-icon {
+      width: 64px; height: 64px; border-radius: var(--radius-full);
+      background: var(--green-light); display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+    }
+    .success-icon .material-symbols-outlined { font-size: 32px; color: var(--green); }
+    .ref-badge {
+      display: inline-block; background: var(--white); border: 1px solid var(--border);
+      border-radius: var(--radius-full); padding: 8px 20px;
+      font-size: 13px; margin: 16px 0 24px; box-shadow: var(--shadow-sm);
+    }
+    .ref-badge span { font-weight: 700; color: var(--navy); }
+
+    /* Checkbox styled */
+    .checkbox-row {
+      display: flex; align-items: flex-start; gap: 10px;
+      cursor: pointer; padding: 4px 0;
+    }
+    .checkbox-row input[type="checkbox"] {
+      width: 18px; height: 18px; margin-top: 2px; flex-shrink: 0;
+      accent-color: var(--blue); cursor: pointer;
+    }
+    .checkbox-row span { font-size: 13px; color: var(--text); line-height: 1.5; }
+
+    /* Validation error */
+    .error-box {
+      display: none; background: var(--red-light); border: 1px solid #FECACA;
+      border-radius: var(--radius); padding: 12px 16px; margin-bottom: 20px;
+    }
+    .error-box.show { display: block; }
+    .error-box p { font-size: 13px; font-weight: 600; color: var(--red); display: flex; align-items: center; gap: 6px; }
+    .error-box ul { list-style: disc; margin: 6px 0 0 24px; }
+    .error-box li { font-size: 13px; color: #991B1B; }
+
+    /* Char counter */
+    .char-count { font-size: 11px; color: var(--text-muted); text-align: right; margin-top: 4px; }
+    .char-count.over { color: var(--red); }
+
+    /* Footer */
+    .form-footer { text-align: center; padding: 20px 0 32px; }
+    .form-footer p { font-size: 11px; color: var(--text-muted); }
+    .form-footer strong { color: var(--text-light); font-weight: 600; }
+
+    /* Product image placeholder */
+    .product-image {
+      background: var(--blue-light); border-radius: var(--radius);
+      padding: 20px; text-align: center; margin-bottom: 16px;
+      border: 1px solid #D4E4FF;
+    }
+    .product-image .material-symbols-outlined { font-size: 48px; color: var(--blue); opacity: 0.5; }
+    .product-image p { font-size: 12px; color: var(--blue); font-weight: 500; margin-top: 6px; }
+
+    /* Location tag */
+    .location-tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 12px; color: var(--text-light);
+    }
+    .location-tag .material-symbols-outlined { font-size: 14px; }
+
+    /* Dispenser review card */
+    .dispenser-review {
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 14px 16px; margin-bottom: 10px; background: var(--bg);
+    }
+    .dispenser-review-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+    .dispenser-review h4 { font-size: 14px; font-weight: 700; color: var(--navy); }
+    .dispenser-review .badges { display: flex; flex-wrap: wrap; gap: 4px; }
+
+    /* Site info grid */
+    .site-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    /* Skip link */
+    .skip-link { position: absolute; left: -9999px; top: auto; width: 1px; height: 1px; overflow: hidden; z-index: 200; }
+    .skip-link:focus { position: fixed; top: 8px; left: 8px; width: auto; height: auto; padding: 8px 16px; background: var(--blue); color: white; border-radius: var(--radius); font-size: 14px; font-weight: 600; text-decoration: none; z-index: 200; }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .welcome-title { font-size: 22px; }
+      .page-title { font-size: 19px; }
+      .card { padding: 18px; }
+      .accordion-header { padding: 14px 16px; }
+      .accordion-body { padding: 16px; }
+      .site-grid { grid-template-columns: 1fr; }
+      .dropzone { padding: 40px 16px; }
+      .accordion-header-left { min-width: 0; }
+      .acc-title { font-size: 14px; word-break: break-word; }
+    }
+  </style>
 </head>
 <body>
-    <div class="form-container">
-        <div class="form-header">
-            <h1>Pre-Installation Assessment</h1>
-            <p>Please complete this form to confirm your installation site is ready.</p>
-        </div>
 
-        <div class="progress-bar" id="progressBar"></div>
+  <a href="#main-content" class="skip-link">Skip to content</a>
 
-        <!-- Page 1: Customer & Site Info -->
-        <div class="form-page" data-owl-page="1" id="page-1">
-            <h2>Site Information</h2>
-            <div class="field-group">
-                <label for="submitter_name">Your Name</label>
-                <input type="text" id="submitter_name" name="submitter_name" data-owl-field="submitter_name" placeholder="Full name">
-            </div>
-            <div class="field-group">
-                <label for="submitter_email">Email</label>
-                <input type="email" id="submitter_email" name="submitter_email" data-owl-field="submitter_email" placeholder="email@example.com">
-            </div>
-            <div class="field-group">
-                <label for="site_address">Installation Site Address</label>
-                <textarea id="site_address" name="site_address" data-owl-field="site_address" placeholder="Full address including postcode"></textarea>
-            </div>
-            <div class="field-group">
-                <label for="site_contact_phone">Site Contact Phone</label>
-                <input type="tel" id="site_contact_phone" name="site_contact_phone" data-owl-field="site_contact_phone" placeholder="+44...">
-            </div>
-            <div class="nav-buttons">
-                <button class="btn-nav primary" onclick="navigateTo(2)">Next &rarr;</button>
-            </div>
-        </div>
+  <!-- Progress Bar -->
+  <div class="progress-track">
+    <div class="progress-fill" id="progressBar" style="width:0%"></div>
+  </div>
 
-        <!-- Page 2: Product Assessments (dynamic) -->
-        <div class="form-page hidden" data-owl-page="2" id="page-2">
-            <h2>Product Assessments</h2>
-            <p style="margin-bottom: 16px; color: var(--gray-700);">
-                Complete the assessment for each product in your order.
-            </p>
-            <div id="product-sections"></div>
-            <div class="nav-buttons">
-                <button class="btn-nav" onclick="navigateTo(1)">&larr; Back</button>
-                <button class="btn-nav primary" onclick="navigateTo(3)">Next &rarr;</button>
-            </div>
-        </div>
-
-        <!-- Page 3: General Notes & Submit -->
-        <div class="form-page hidden" data-owl-page="3" id="page-3">
-            <h2>General Notes & Submission</h2>
-            <div class="field-group">
-                <label for="general_notes">Additional Notes or Concerns</label>
-                <textarea id="general_notes" name="general_notes" data-owl-field="general_notes"
-                    placeholder="Any additional information about the site, access requirements, scheduling preferences..."></textarea>
-            </div>
-            <div class="field-group">
-                <label for="preferred_date">Preferred Installation Date</label>
-                <input type="date" id="preferred_date" name="preferred_date" data-owl-field="preferred_date">
-            </div>
-            <div class="nav-buttons">
-                <button class="btn-nav" onclick="navigateTo(2)">&larr; Back</button>
-            </div>
-            <div style="margin-top: 24px;">
-                <button class="btn-submit" id="submitBtn" onclick="submitPIA()">Submit Assessment</button>
-            </div>
-        </div>
+  <!-- Header -->
+  <header class="form-header" id="formHeader">
+    <div class="header-inner">
+      <div class="logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 162 60" fill="none"><path d="M112.525 20.0157C111.524 19.8535 110.576 20.4246 110.199 21.3325C109.913 21.1235 108.389 20.0048 106.196 20.0048C104.53 20.0048 103.01 20.6191 101.712 21.5054C99.7592 22.8474 98.2032 24.8181 97.0634 27.0122C95.9342 29.2099 95.2193 31.6399 95.2122 34.034C95.2122 34.4159 95.2371 34.7978 95.278 35.1778C95.278 35.1778 94.3497 37.4746 91.8922 37.4746C90.6954 37.4746 88.437 36.6694 88.3072 33.8574C88.3001 33.6809 88.3499 33.1891 88.3552 33.1261L89.9041 22.4944C90.0784 21.3 89.2622 20.1886 88.0867 20.0139C86.9077 19.8373 85.8106 20.6642 85.6381 21.8549L83.8136 34.3798C83.5522 36.156 82.0425 37.5088 80.2678 37.471C77.5452 37.4188 76.5708 34.8284 76.6828 33.8538C76.7041 33.6773 76.697 33.4936 76.7219 33.3098C76.7219 33.299 80.4847 7.75729 80.4847 7.75729C80.659 6.56298 79.8499 5.45153 78.6709 5.27319C77.4919 5.09666 76.3947 5.91628 76.2187 7.1106L72.2052 34.3384C71.9437 36.1182 70.434 37.4368 68.6593 37.4332C67.523 37.4332 65.1402 36.5847 65.0744 33.816C65.0744 33.6755 65.0886 33.5332 65.1064 33.3891L68.8763 7.75549C69.0505 6.56118 68.2379 5.44973 67.0624 5.27139C65.8835 5.09486 64.7863 5.91809 64.6102 7.1088L60.6038 34.3366C60.3424 36.1164 58.8327 37.4458 57.058 37.4314C54.8298 37.4134 53.4588 35.5453 53.473 33.8142C53.473 33.6593 53.4873 33.499 53.5086 33.3368L55.077 22.4889C55.2513 21.2946 54.4351 20.1832 53.2561 20.0121C52.0771 19.8355 50.9799 20.6624 50.811 21.8567L49.0043 34.3438C48.7429 36.1164 47.114 37.498 45.4584 37.435C42.5812 37.3251 41.7935 34.8284 41.8735 33.8178C41.8877 33.6413 41.8877 33.4575 41.9126 33.2738L43.465 22.4925C43.6357 21.2982 42.8231 20.1868 41.6441 20.0157C40.4651 19.8427 39.3679 20.666 39.199 21.8603L37.6466 32.6379C37.5879 33.0306 37.5594 33.4287 37.5594 33.8214C37.5594 35.9939 38.4308 37.9934 39.8498 39.4417C41.2618 40.8936 43.257 41.8123 45.4602 41.8087C47.7364 41.8087 49.8081 40.8234 51.2591 39.2273C51.3249 39.2976 53.3486 41.8087 57.058 41.8087C59.3342 41.8087 61.4058 40.8234 62.8569 39.2273C62.9227 39.2976 64.9943 41.8087 68.6558 41.8087C70.9266 41.8087 72.9929 40.827 74.444 39.2435C74.5133 39.321 76.5743 41.8465 80.2606 41.8465C82.5439 41.8465 84.6227 40.854 86.0738 39.2508C86.1431 39.3246 88.1934 41.8465 91.8833 41.8465C93.9407 41.8465 95.8239 41.0305 97.243 39.6993C97.7622 40.2469 99.4391 41.8429 102.174 41.8429C104.909 41.8429 107.014 40.083 107.189 39.9497L106.502 44.2874C99.6329 43.457 95.8915 46.0852 94.4831 47.4002C90.6759 50.9705 91.3143 55.4145 92.8471 57.3402C93.8412 58.5903 94.8494 59.3181 96.3485 59.7288C98.2939 60.262 100.623 60.044 102.796 58.7651C102.839 58.7398 107.71 56.0306 109.84 49.4357C110.269 49.5672 110.587 49.6861 110.758 49.751C111.871 50.1851 113.116 49.6195 113.544 48.4936C113.973 47.366 113.414 46.105 112.303 45.6709C111.979 45.5466 111.428 45.3556 110.731 45.1485L114.302 22.5196C114.49 21.3289 113.688 20.2066 112.513 20.0157L112.527 20.0121L112.525 20.0157ZM103.037 52.8692C100.62 55.5676 99.1617 55.6307 98.4024 55.6217C97.9205 55.6217 96.9584 55.5406 96.3343 54.7462C95.6443 53.8671 96.0978 52.5287 96.3556 52.0045C96.6099 51.4785 96.9833 50.9939 97.3319 50.6877C98.2566 49.8681 99.3022 49.3313 100.438 48.9818C101.571 48.6359 102.793 48.4936 103.999 48.4936C104.532 48.4936 105.058 48.526 105.571 48.5783C104.907 50.4085 103.959 51.8352 103.035 52.8674H103.038L103.037 52.8692ZM108.233 31.0995C107.626 32.8307 106.586 34.5474 105.425 35.7237C104.849 36.3163 103.545 37.4692 102.185 37.4692C101.063 37.4692 100.211 36.682 99.9352 36.0533C99.6845 35.4841 99.5316 34.8698 99.5316 34.0322C99.5316 33.0576 99.745 31.8993 100.152 30.7465C100.759 29.0153 101.799 27.2986 102.96 26.1223C103.536 25.5297 104.875 24.3768 106.2 24.3768C107.448 24.3768 108.195 25.2919 108.45 25.7927C108.704 26.2844 108.853 26.9762 108.853 27.8138C108.853 28.7884 108.64 29.9466 108.233 31.0995Z" fill="#2968fe"/><path d="M88.8532 17.6869C90.4727 17.6869 91.7856 16.357 91.7856 14.7164C91.7856 13.0759 90.4727 11.746 88.8532 11.746C87.2338 11.746 85.9209 13.0759 85.9209 14.7164C85.9209 16.357 87.2338 17.6869 88.8532 17.6869Z" fill="#2968fe"/><path d="M34.5497 29.7481C33.5556 29.087 32.2166 29.3662 31.564 30.3768C30.2001 32.4826 26.1563 37.4346 19.0451 37.4346C14.9693 37.4346 11.3044 35.7701 8.62986 33.0645C5.96248 30.3588 4.31938 26.6426 4.31582 22.5138C4.31582 18.3851 5.95893 14.6724 8.62986 11.9631C11.3008 9.26108 15.3285 7.39666 19.5679 7.61823C19.1216 12.2676 20.08 15.4524 21.4724 17.805C23.9406 21.9626 28.8273 23.7748 32.4851 21.1177C35.5224 18.9129 35.6344 14.912 34.3398 11.9019C33.3992 9.71503 31.2368 7.78396 30.3334 7.0526C27.6269 4.86212 24.6395 4.0533 24.6395 4.0533C24.7924 3.54171 24.9222 3.16342 24.9951 2.96888C25.4237 1.84121 24.8653 0.580251 23.7539 0.146119C22.6407 -0.288012 21.3959 0.27762 20.9674 1.40348C20.8251 1.77817 20.6046 2.43207 20.3681 3.28232C8.85748 2.50772 0 11.7794 0 22.5174C0 33.2554 8.52495 41.8048 19.0398 41.8048C28.2707 41.8048 33.4418 35.4297 35.1667 32.7727C35.8194 31.7657 35.5437 30.4092 34.5461 29.7481H34.5497ZM23.8233 8.38021C23.9495 8.42344 26.8712 9.33314 29.2558 12.0046C31.756 14.8093 30.602 17.1331 29.9316 17.5997C28.5819 18.5364 26.7058 17.5042 25.9216 16.5855C25.1374 15.6668 24.5968 14.586 24.2376 13.4385C23.5441 11.2174 23.7841 8.85758 23.8233 8.38021Z" fill="#2968fe"/><path d="M154.085 22.3191C152.673 20.8672 150.678 19.9521 148.475 19.9521C146.554 19.9521 145.299 20.7249 145.162 20.7933C144.831 20.3664 144.349 20.0584 143.78 19.9737C142.601 19.7972 141.504 20.624 141.335 21.8183L139.529 34.3055C139.267 36.078 137.757 37.3966 135.983 37.3966C133.337 37.3966 132.296 34.9377 132.398 33.7794C132.412 33.6029 132.412 33.4192 132.437 33.2354L133.989 22.4542C134.16 21.2599 133.347 20.1484 132.168 19.9773C131.171 19.8296 130.241 20.4006 129.871 21.3013C129.599 21.1068 128.082 20.0079 125.92 20.0079C124.253 20.0079 122.733 20.6222 121.435 21.5085C119.482 22.8505 117.926 24.8212 116.786 27.0153C115.657 29.213 114.942 31.643 114.935 34.037C114.935 35.4007 115.179 36.7679 115.803 38.0289C116.42 39.2863 118.332 41.8442 121.906 41.8442C125.669 41.8442 128.333 38.753 129.138 37.7569C129.48 38.3603 131.496 41.774 135.979 41.774C139.891 41.774 143.215 38.8737 143.793 34.9503L144.856 27.8853V27.8637C144.982 26.9702 146.057 24.3601 148.475 24.3276C151.059 24.2916 152.168 26.8423 152.06 27.9448L150.54 38.7603C150.362 39.9546 151.171 41.0696 152.35 41.2498C153.529 41.4299 154.629 40.6103 154.807 39.416C154.807 39.416 156.379 28.3393 156.379 27.9466C156.379 25.7741 155.508 23.7746 154.089 22.3263V22.3227L154.085 22.3191ZM127.961 31.0972C127.355 32.8283 126.314 34.545 125.153 35.7213C124.577 36.314 123.274 37.4669 121.913 37.4669C120.791 37.4669 119.939 36.6797 119.664 36.051C119.413 35.4817 119.26 34.8675 119.26 34.0298C119.26 33.0553 119.473 31.897 119.881 30.7441C120.487 29.013 121.527 27.2963 122.688 26.12C123.265 25.5273 124.604 24.3745 125.928 24.3745C127.177 24.3745 127.924 25.2896 128.178 25.7903C128.432 26.2821 128.582 26.9738 128.582 27.8115C128.582 28.786 128.368 29.9443 127.961 31.0972Z" fill="#2968fe"/><path d="M156.175 38.5262V38.1803H158.613V38.5262H157.597V41.2679H157.19V38.5262H156.175Z" fill="#2968fe"/><path d="M159.518 38.1803L160.48 40.7761L161.445 38.1803H162V41.2679H161.616V38.6991H161.609L160.658 41.2679H160.313L159.361 38.6991H159.354V41.2679H158.97V38.1803H159.525H159.518Z" fill="#2968fe"/></svg>
+      </div>
+      <div class="step-dots" id="stepDots">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
     </div>
+  </header>
 
-    <script src="owl-sdk.js"></script>
-    <script>
-        let currentPage = 1;
-        const totalPages = 3;
-        let productData = [];
+  <main class="form-body" id="main-content">
 
-        function initProgressBar() {
-            const bar = document.getElementById('progressBar');
-            bar.innerHTML = '';
-            for (let i = 1; i <= totalPages; i++) {
-                const step = document.createElement('div');
-                step.className = 'progress-step' + (i <= currentPage ? ' active' : '');
-                bar.appendChild(step);
+    <!-- ===================== PAGE 0: WELCOME ===================== -->
+    <section class="page active" id="page-0" data-owl-page="welcome">
+      <div class="welcome-hero">
+        <div class="welcome-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 162 60" fill="none"><path d="M112.525 20.0157C111.524 19.8535 110.576 20.4246 110.199 21.3325C109.913 21.1235 108.389 20.0048 106.196 20.0048C104.53 20.0048 103.01 20.6191 101.712 21.5054C99.7592 22.8474 98.2032 24.8181 97.0634 27.0122C95.9342 29.2099 95.2193 31.6399 95.2122 34.034C95.2122 34.4159 95.2371 34.7978 95.278 35.1778C95.278 35.1778 94.3497 37.4746 91.8922 37.4746C90.6954 37.4746 88.437 36.6694 88.3072 33.8574C88.3001 33.6809 88.3499 33.1891 88.3552 33.1261L89.9041 22.4944C90.0784 21.3 89.2622 20.1886 88.0867 20.0139C86.9077 19.8373 85.8106 20.6642 85.6381 21.8549L83.8136 34.3798C83.5522 36.156 82.0425 37.5088 80.2678 37.471C77.5452 37.4188 76.5708 34.8284 76.6828 33.8538C76.7041 33.6773 76.697 33.4936 76.7219 33.3098C76.7219 33.299 80.4847 7.75729 80.4847 7.75729C80.659 6.56298 79.8499 5.45153 78.6709 5.27319C77.4919 5.09666 76.3947 5.91628 76.2187 7.1106L72.2052 34.3384C71.9437 36.1182 70.434 37.4368 68.6593 37.4332C67.523 37.4332 65.1402 36.5847 65.0744 33.816C65.0744 33.6755 65.0886 33.5332 65.1064 33.3891L68.8763 7.75549C69.0505 6.56118 68.2379 5.44973 67.0624 5.27139C65.8835 5.09486 64.7863 5.91809 64.6102 7.1088L60.6038 34.3366C60.3424 36.1164 58.8327 37.4458 57.058 37.4314C54.8298 37.4134 53.4588 35.5453 53.473 33.8142C53.473 33.6593 53.4873 33.499 53.5086 33.3368L55.077 22.4889C55.2513 21.2946 54.4351 20.1832 53.2561 20.0121C52.0771 19.8355 50.9799 20.6624 50.811 21.8567L49.0043 34.3438C48.7429 36.1164 47.114 37.498 45.4584 37.435C42.5812 37.3251 41.7935 34.8284 41.8735 33.8178C41.8877 33.6413 41.8877 33.4575 41.9126 33.2738L43.465 22.4925C43.6357 21.2982 42.8231 20.1868 41.6441 20.0157C40.4651 19.8427 39.3679 20.666 39.199 21.8603L37.6466 32.6379C37.5879 33.0306 37.5594 33.4287 37.5594 33.8214C37.5594 35.9939 38.4308 37.9934 39.8498 39.4417C41.2618 40.8936 43.257 41.8123 45.4602 41.8087C47.7364 41.8087 49.8081 40.8234 51.2591 39.2273C51.3249 39.2976 53.3486 41.8087 57.058 41.8087C59.3342 41.8087 61.4058 40.8234 62.8569 39.2273C62.9227 39.2976 64.9943 41.8087 68.6558 41.8087C70.9266 41.8087 72.9929 40.827 74.444 39.2435C74.5133 39.321 76.5743 41.8465 80.2606 41.8465C82.5439 41.8465 84.6227 40.854 86.0738 39.2508C86.1431 39.3246 88.1934 41.8465 91.8833 41.8465C93.9407 41.8465 95.8239 41.0305 97.243 39.6993C97.7622 40.2469 99.4391 41.8429 102.174 41.8429C104.909 41.8429 107.014 40.083 107.189 39.9497L106.502 44.2874C99.6329 43.457 95.8915 46.0852 94.4831 47.4002C90.6759 50.9705 91.3143 55.4145 92.8471 57.3402C93.8412 58.5903 94.8494 59.3181 96.3485 59.7288C98.2939 60.262 100.623 60.044 102.796 58.7651C102.839 58.7398 107.71 56.0306 109.84 49.4357C110.269 49.5672 110.587 49.6861 110.758 49.751C111.871 50.1851 113.116 49.6195 113.544 48.4936C113.973 47.366 113.414 46.105 112.303 45.6709C111.979 45.5466 111.428 45.3556 110.731 45.1485L114.302 22.5196C114.49 21.3289 113.688 20.2066 112.513 20.0157L112.527 20.0121L112.525 20.0157ZM103.037 52.8692C100.62 55.5676 99.1617 55.6307 98.4024 55.6217C97.9205 55.6217 96.9584 55.5406 96.3343 54.7462C95.6443 53.8671 96.0978 52.5287 96.3556 52.0045C96.6099 51.4785 96.9833 50.9939 97.3319 50.6877C98.2566 49.8681 99.3022 49.3313 100.438 48.9818C101.571 48.6359 102.793 48.4936 103.999 48.4936C104.532 48.4936 105.058 48.526 105.571 48.5783C104.907 50.4085 103.959 51.8352 103.035 52.8674H103.038L103.037 52.8692ZM108.233 31.0995C107.626 32.8307 106.586 34.5474 105.425 35.7237C104.849 36.3163 103.545 37.4692 102.185 37.4692C101.063 37.4692 100.211 36.682 99.9352 36.0533C99.6845 35.4841 99.5316 34.8698 99.5316 34.0322C99.5316 33.0576 99.745 31.8993 100.152 30.7465C100.759 29.0153 101.799 27.2986 102.96 26.1223C103.536 25.5297 104.875 24.3768 106.2 24.3768C107.448 24.3768 108.195 25.2919 108.45 25.7927C108.704 26.2844 108.853 26.9762 108.853 27.8138C108.853 28.7884 108.64 29.9466 108.233 31.0995Z" fill="#2968fe"/><path d="M88.8532 17.6869C90.4727 17.6869 91.7856 16.357 91.7856 14.7164C91.7856 13.0759 90.4727 11.746 88.8532 11.746C87.2338 11.746 85.9209 13.0759 85.9209 14.7164C85.9209 16.357 87.2338 17.6869 88.8532 17.6869Z" fill="#2968fe"/><path d="M34.5497 29.7481C33.5556 29.087 32.2166 29.3662 31.564 30.3768C30.2001 32.4826 26.1563 37.4346 19.0451 37.4346C14.9693 37.4346 11.3044 35.7701 8.62986 33.0645C5.96248 30.3588 4.31938 26.6426 4.31582 22.5138C4.31582 18.3851 5.95893 14.6724 8.62986 11.9631C11.3008 9.26108 15.3285 7.39666 19.5679 7.61823C19.1216 12.2676 20.08 15.4524 21.4724 17.805C23.9406 21.9626 28.8273 23.7748 32.4851 21.1177C35.5224 18.9129 35.6344 14.912 34.3398 11.9019C33.3992 9.71503 31.2368 7.78396 30.3334 7.0526C27.6269 4.86212 24.6395 4.0533 24.6395 4.0533C24.7924 3.54171 24.9222 3.16342 24.9951 2.96888C25.4237 1.84121 24.8653 0.580251 23.7539 0.146119C22.6407 -0.288012 21.3959 0.27762 20.9674 1.40348C20.8251 1.77817 20.6046 2.43207 20.3681 3.28232C8.85748 2.50772 0 11.7794 0 22.5174C0 33.2554 8.52495 41.8048 19.0398 41.8048C28.2707 41.8048 33.4418 35.4297 35.1667 32.7727C35.8194 31.7657 35.5437 30.4092 34.5461 29.7481H34.5497ZM23.8233 8.38021C23.9495 8.42344 26.8712 9.33314 29.2558 12.0046C31.756 14.8093 30.602 17.1331 29.9316 17.5997C28.5819 18.5364 26.7058 17.5042 25.9216 16.5855C25.1374 15.6668 24.5968 14.586 24.2376 13.4385C23.5441 11.2174 23.7841 8.85758 23.8233 8.38021Z" fill="#2968fe"/><path d="M154.085 22.3191C152.673 20.8672 150.678 19.9521 148.475 19.9521C146.554 19.9521 145.299 20.7249 145.162 20.7933C144.831 20.3664 144.349 20.0584 143.78 19.9737C142.601 19.7972 141.504 20.624 141.335 21.8183L139.529 34.3055C139.267 36.078 137.757 37.3966 135.983 37.3966C133.337 37.3966 132.296 34.9377 132.398 33.7794C132.412 33.6029 132.412 33.4192 132.437 33.2354L133.989 22.4542C134.16 21.2599 133.347 20.1484 132.168 19.9773C131.171 19.8296 130.241 20.4006 129.871 21.3013C129.599 21.1068 128.082 20.0079 125.92 20.0079C124.253 20.0079 122.733 20.6222 121.435 21.5085C119.482 22.8505 117.926 24.8212 116.786 27.0153C115.657 29.213 114.942 31.643 114.935 34.037C114.935 35.4007 115.179 36.7679 115.803 38.0289C116.42 39.2863 118.332 41.8442 121.906 41.8442C125.669 41.8442 128.333 38.753 129.138 37.7569C129.48 38.3603 131.496 41.774 135.979 41.774C139.891 41.774 143.215 38.8737 143.793 34.9503L144.856 27.8853V27.8637C144.982 26.9702 146.057 24.3601 148.475 24.3276C151.059 24.2916 152.168 26.8423 152.06 27.9448L150.54 38.7603C150.362 39.9546 151.171 41.0696 152.35 41.2498C153.529 41.4299 154.629 40.6103 154.807 39.416C154.807 39.416 156.379 28.3393 156.379 27.9466C156.379 25.7741 155.508 23.7746 154.089 22.3263V22.3227L154.085 22.3191ZM127.961 31.0972C127.355 32.8283 126.314 34.545 125.153 35.7213C124.577 36.314 123.274 37.4669 121.913 37.4669C120.791 37.4669 119.939 36.6797 119.664 36.051C119.413 35.4817 119.26 34.8675 119.26 34.0298C119.26 33.0553 119.473 31.897 119.881 30.7441C120.487 29.013 121.527 27.2963 122.688 26.12C123.265 25.5273 124.604 24.3745 125.928 24.3745C127.177 24.3745 127.924 25.2896 128.178 25.7903C128.432 26.2821 128.582 26.9738 128.582 27.8115C128.582 28.786 128.368 29.9443 127.961 31.0972Z" fill="#2968fe"/><path d="M156.175 38.5262V38.1803H158.613V38.5262H157.597V41.2679H157.19V38.5262H156.175Z" fill="#2968fe"/><path d="M159.518 38.1803L160.48 40.7761L161.445 38.1803H162V41.2679H161.616V38.6991H161.609L160.658 41.2679H160.313L159.361 38.6991H159.354V41.2679H158.97V38.1803H159.525H159.518Z" fill="#2968fe"/></svg>
+        </div>
+        <h1 class="welcome-title">Let's get your installation ready</h1>
+        <p class="welcome-subtitle">This quick assessment helps us ensure a smooth first-time installation of your water dispenser. It only takes a few minutes.</p>
+        <button class="btn btn-primary btn-lg" onclick="goTo(1)">
+          Get Started <span class="material-symbols-outlined">arrow_forward</span>
+        </button>
+      </div>
+
+      <div class="expect-list">
+        <p class="expect-label">What to expect</p>
+        <div class="expect-item">
+          <div class="expect-num">1</div>
+          <div class="expect-text">
+            <h4>Review your details</h4>
+            <p>Confirm site and dispenser information is correct</p>
+          </div>
+        </div>
+        <div class="expect-item">
+          <div class="expect-num">2</div>
+          <div class="expect-text">
+            <h4>Complete site checks</h4>
+            <p>Verify power, water and space for each dispenser</p>
+          </div>
+        </div>
+        <div class="expect-item">
+          <div class="expect-num">3</div>
+          <div class="expect-text">
+            <h4>Confirm &amp; sign off</h4>
+            <p>Declare your site is ready for installation</p>
+          </div>
+        </div>
+      </div>
+
+      <p style="text-align:center;font-size:12px;color:var(--text-muted);margin-top:24px;">
+        Need help? <a href="#" style="color:var(--blue);font-weight:500;">Contact your sales representative</a>
+      </p>
+    </section>
+
+    <!-- ===================== PAGE 1: REVIEW DETAILS ===================== -->
+    <section class="page" id="page-1" data-owl-page="review">
+      <p class="step-label">Step 1 of 4</p>
+      <h1 class="page-title">Review your details</h1>
+      <p class="page-subtitle">Please check the information below is correct. If anything needs changing, contact your sales rep.</p>
+
+      <div class="card">
+        <div class="card-title"><span class="material-symbols-outlined">location_on</span> Site Information</div>
+        <div class="site-grid">
+          <div class="field"><label class="field-label">Address</label><div class="field-readonly" id="rv_address">123 Business Park, London</div></div>
+          <div class="field"><label class="field-label">Postcode</label><div class="field-readonly" id="rv_postcode">SW1A 1AA</div></div>
+          <div class="field"><label class="field-label">Site Contact</label><div class="field-readonly" id="rv_contact">John Smith</div></div>
+          <div class="field">
+            <label class="field-label">Business Days</label>
+            <div class="day-pills" id="rv_days">
+              <span class="day-pill">Mon</span><span class="day-pill">Tue</span><span class="day-pill">Wed</span><span class="day-pill">Thu</span><span class="day-pill">Fri</span>
+            </div>
+          </div>
+          <div class="field"><label class="field-label">Opening Hours</label><div class="field-readonly" id="rv_hours">09:00 - 17:00 (Mon-Fri)</div></div>
+          <div class="field"><label class="field-label">Earliest Install Date</label><div class="field-readonly" id="rv_date">15 July 2026</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="material-symbols-outlined">water_full</span> Your Dispensers</div>
+        <div id="reviewDispensers"></div>
+      </div>
+
+      <div class="info-banner">
+        <span class="material-symbols-outlined">info</span>
+        <p>If any details are incorrect, contact your sales representative before continuing.</p>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="goTo(0)">Back</button>
+        <button class="btn btn-primary" onclick="goTo(2)">Review Dispensers <span class="material-symbols-outlined">arrow_forward</span></button>
+      </div>
+    </section>
+
+    <!-- ===================== PAGE 2: SITE CHECKS ===================== -->
+    <section class="page" id="page-2" data-owl-page="checks">
+      <p class="step-label">Step 2 of 4</p>
+      <h1 class="page-title">Site checks</h1>
+      <p class="page-subtitle">Complete the checks for each dispenser below. Expand each one, answer the questions, then save.</p>
+
+      <div class="error-box" id="checksErrors">
+        <p><span class="material-symbols-outlined" style="font-size:16px">error</span> Please complete all dispenser checks</p>
+        <ul id="checksErrorList"></ul>
+      </div>
+
+      <div id="dispenserAccordions"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="goTo(1)">Back</button>
+        <button class="btn btn-primary" onclick="validateChecksAndContinue()">Continue to Delivery <span class="material-symbols-outlined">arrow_forward</span></button>
+      </div>
+    </section>
+
+    <!-- ===================== PAGE 3: ADDITIONAL INFO ===================== -->
+    <section class="page" id="page-3" data-owl-page="delivery">
+      <p class="step-label">Step 3 of 4</p>
+      <h1 class="page-title">Additional information &amp; delivery</h1>
+      <p class="page-subtitle">Almost there! Share any extra details and review delivery information.</p>
+
+      <div class="card">
+        <div class="card-title"><span class="material-symbols-outlined">edit_note</span> Anything else we should know?</div>
+        <div class="field">
+          <label class="field-label" for="additionalNotes">Additional information</label>
+          <textarea id="additionalNotes" maxlength="500" placeholder="e.g., Access codes, parking restrictions, preferred delivery time..." oninput="updateCharCount()"></textarea>
+          <p class="char-count" id="charCount">0 / 500</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="callout">
+          <div class="callout-title"><span class="material-symbols-outlined">local_shipping</span> Important Delivery Information</div>
+          <ul>
+            <li>Our engineer will arrive during the agreed time window on your installation date</li>
+            <li>Please ensure the installation area is clear and accessible</li>
+            <li>A responsible person must be present on site to grant access</li>
+            <li>Installation typically takes 30-60 minutes per dispenser</li>
+            <li>The engineer will test the dispenser and provide a brief walkthrough</li>
+          </ul>
+        </div>
+        <label class="checkbox-row">
+          <input type="checkbox" id="deliveryAck">
+          <span>I have read and understand the delivery information above</span>
+        </label>
+      </div>
+
+      <div class="error-box" id="page3Errors">
+        <p><span class="material-symbols-outlined" style="font-size:16px">error</span> Please acknowledge the delivery information</p>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="goTo(2)">Back</button>
+        <button class="btn btn-primary" onclick="validatePage3()">Proceed to Sign-off <span class="material-symbols-outlined">arrow_forward</span></button>
+      </div>
+    </section>
+
+    <!-- ===================== PAGE 4: DECLARATION ===================== -->
+    <section class="page" id="page-4" data-owl-page="declaration">
+      <p class="step-label">Step 4 of 4</p>
+      <h1 class="page-title">Declaration &amp; sign-off</h1>
+      <p class="page-subtitle">Please confirm your readiness and sign off on the assessment.</p>
+
+      <div class="error-box" id="validationErrors">
+        <p><span class="material-symbols-outlined" style="font-size:16px">error</span> Please complete all required fields</p>
+        <ul id="errorList"></ul>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="material-symbols-outlined">verified</span> Installation readiness</div>
+        <div class="readiness-option">
+          <input type="radio" name="readiness" id="r_ready" value="ready">
+          <label for="r_ready">
+            <span class="material-symbols-outlined readiness-icon" style="color:var(--green)">check_circle</span>
+            <div><p class="readiness-label">Ready to install</p><p class="readiness-desc">My site meets all requirements and I am ready for installation</p></div>
+          </label>
+        </div>
+        <div class="readiness-option">
+          <input type="radio" name="readiness" id="r_sales" value="sales">
+          <label for="r_sales">
+            <span class="material-symbols-outlined readiness-icon" style="color:var(--amber)">chat</span>
+            <div><p class="readiness-label">Need to speak to sales</p><p class="readiness-desc">I have questions or concerns to discuss before installation</p></div>
+          </label>
+        </div>
+        <div class="readiness-option">
+          <input type="radio" name="readiness" id="r_survey" value="survey">
+          <label for="r_survey">
+            <span class="material-symbols-outlined readiness-icon" style="color:var(--text-muted)">help</span>
+            <div><p class="readiness-label">Unable to confirm — site survey required</p><p class="readiness-desc">I could not verify some requirements and need a site survey</p></div>
+          </label>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="material-symbols-outlined">person</span> Your details</div>
+        <div class="field">
+          <label class="field-label" for="fullName">Full Name <span class="req">*</span></label>
+          <input type="text" id="fullName" placeholder="Enter your full name" required>
+        </div>
+        <div class="field">
+          <label class="field-label" for="additionalComments">Additional comments (optional)</label>
+          <textarea id="additionalComments" rows="3" placeholder="Any final comments..."></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="material-symbols-outlined">gavel</span> Legal agreement</div>
+        <label class="checkbox-row">
+          <input type="checkbox" id="legalAgree">
+          <span>I confirm that the information provided in this assessment is accurate to the best of my knowledge. I understand that inaccurate information may result in delays to the installation or additional site visit charges.<span class="req"> *</span></span>
+        </label>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="goTo(3)">Back</button>
+        <button class="btn btn-success" onclick="submitAssessment()">Submit Assessment <span class="material-symbols-outlined">check</span></button>
+      </div>
+    </section>
+
+    <!-- ===================== PAGE 5: SUCCESS ===================== -->
+    <section class="page" id="page-5" data-owl-page="success">
+      <div class="success-hero">
+        <div class="success-icon"><span class="material-symbols-outlined">check_circle</span></div>
+        <h1 class="page-title" style="font-size:24px;">You're all set!</h1>
+        <p class="page-subtitle" style="max-width:380px;margin:8px auto 0;">Thank you for completing the assessment. Our team will review your submission and be in touch shortly.</p>
+        <div class="ref-badge">Reference: <span id="refNumber">REF-2026-XXXX</span></div>
+      </div>
+
+      <div style="max-width:400px;margin:0 auto;">
+        <div class="expect-item">
+          <div class="expect-num" style="background:var(--blue-light);"><span class="material-symbols-outlined" style="font-size:16px;color:var(--blue);">schedule</span></div>
+          <div class="expect-text">
+            <h4>Next steps</h4>
+            <p>Review takes 24-48 hours. Check your email for the technical report.</p>
+          </div>
+        </div>
+        <div class="expect-item">
+          <div class="expect-num" style="background:var(--green-light);"><span class="material-symbols-outlined" style="font-size:16px;color:var(--green);">eco</span></div>
+          <div class="expect-text">
+            <h4>Sustainable choice</h4>
+            <p>You're helping reduce single-use plastic waste across the UK.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row" style="justify-content:center;margin-top:28px;">
+        <button class="btn btn-secondary" onclick="goTo(0)">Start New Assessment</button>
+        <button class="btn btn-primary" onclick="window.print()">Print Summary</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="form-footer" id="formFooter">
+    <p style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;">Powered by <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 162 60" fill="none" style="height:14px;width:auto;vertical-align:middle;"><path d="M112.525 20.0157C111.524 19.8535 110.576 20.4246 110.199 21.3325C109.913 21.1235 108.389 20.0048 106.196 20.0048C104.53 20.0048 103.01 20.6191 101.712 21.5054C99.7592 22.8474 98.2032 24.8181 97.0634 27.0122C95.9342 29.2099 95.2193 31.6399 95.2122 34.034C95.2122 34.4159 95.2371 34.7978 95.278 35.1778C95.278 35.1778 94.3497 37.4746 91.8922 37.4746C90.6954 37.4746 88.437 36.6694 88.3072 33.8574C88.3001 33.6809 88.3499 33.1891 88.3552 33.1261L89.9041 22.4944C90.0784 21.3 89.2622 20.1886 88.0867 20.0139C86.9077 19.8373 85.8106 20.6642 85.6381 21.8549L83.8136 34.3798C83.5522 36.156 82.0425 37.5088 80.2678 37.471C77.5452 37.4188 76.5708 34.8284 76.6828 33.8538C76.7041 33.6773 76.697 33.4936 76.7219 33.3098C76.7219 33.299 80.4847 7.75729 80.4847 7.75729C80.659 6.56298 79.8499 5.45153 78.6709 5.27319C77.4919 5.09666 76.3947 5.91628 76.2187 7.1106L72.2052 34.3384C71.9437 36.1182 70.434 37.4368 68.6593 37.4332C67.523 37.4332 65.1402 36.5847 65.0744 33.816C65.0744 33.6755 65.0886 33.5332 65.1064 33.3891L68.8763 7.75549C69.0505 6.56118 68.2379 5.44973 67.0624 5.27139C65.8835 5.09486 64.7863 5.91809 64.6102 7.1088L60.6038 34.3366C60.3424 36.1164 58.8327 37.4458 57.058 37.4314C54.8298 37.4134 53.4588 35.5453 53.473 33.8142C53.473 33.6593 53.4873 33.499 53.5086 33.3368L55.077 22.4889C55.2513 21.2946 54.4351 20.1832 53.2561 20.0121C52.0771 19.8355 50.9799 20.6624 50.811 21.8567L49.0043 34.3438C48.7429 36.1164 47.114 37.498 45.4584 37.435C42.5812 37.3251 41.7935 34.8284 41.8735 33.8178C41.8877 33.6413 41.8877 33.4575 41.9126 33.2738L43.465 22.4925C43.6357 21.2982 42.8231 20.1868 41.6441 20.0157C40.4651 19.8427 39.3679 20.666 39.199 21.8603L37.6466 32.6379C37.5879 33.0306 37.5594 33.4287 37.5594 33.8214C37.5594 35.9939 38.4308 37.9934 39.8498 39.4417C41.2618 40.8936 43.257 41.8123 45.4602 41.8087C47.7364 41.8087 49.8081 40.8234 51.2591 39.2273C51.3249 39.2976 53.3486 41.8087 57.058 41.8087C59.3342 41.8087 61.4058 40.8234 62.8569 39.2273C62.9227 39.2976 64.9943 41.8087 68.6558 41.8087C70.9266 41.8087 72.9929 40.827 74.444 39.2435C74.5133 39.321 76.5743 41.8465 80.2606 41.8465C82.5439 41.8465 84.6227 40.854 86.0738 39.2508C86.1431 39.3246 88.1934 41.8465 91.8833 41.8465C93.9407 41.8465 95.8239 41.0305 97.243 39.6993C97.7622 40.2469 99.4391 41.8429 102.174 41.8429C104.909 41.8429 107.014 40.083 107.189 39.9497L106.502 44.2874C99.6329 43.457 95.8915 46.0852 94.4831 47.4002C90.6759 50.9705 91.3143 55.4145 92.8471 57.3402C93.8412 58.5903 94.8494 59.3181 96.3485 59.7288C98.2939 60.262 100.623 60.044 102.796 58.7651C102.839 58.7398 107.71 56.0306 109.84 49.4357C110.269 49.5672 110.587 49.6861 110.758 49.751C111.871 50.1851 113.116 49.6195 113.544 48.4936C113.973 47.366 113.414 46.105 112.303 45.6709C111.979 45.5466 111.428 45.3556 110.731 45.1485L114.302 22.5196C114.49 21.3289 113.688 20.2066 112.513 20.0157L112.527 20.0121L112.525 20.0157ZM103.037 52.8692C100.62 55.5676 99.1617 55.6307 98.4024 55.6217C97.9205 55.6217 96.9584 55.5406 96.3343 54.7462C95.6443 53.8671 96.0978 52.5287 96.3556 52.0045C96.6099 51.4785 96.9833 50.9939 97.3319 50.6877C98.2566 49.8681 99.3022 49.3313 100.438 48.9818C101.571 48.6359 102.793 48.4936 103.999 48.4936C104.532 48.4936 105.058 48.526 105.571 48.5783C104.907 50.4085 103.959 51.8352 103.035 52.8674H103.038L103.037 52.8692ZM108.233 31.0995C107.626 32.8307 106.586 34.5474 105.425 35.7237C104.849 36.3163 103.545 37.4692 102.185 37.4692C101.063 37.4692 100.211 36.682 99.9352 36.0533C99.6845 35.4841 99.5316 34.8698 99.5316 34.0322C99.5316 33.0576 99.745 31.8993 100.152 30.7465C100.759 29.0153 101.799 27.2986 102.96 26.1223C103.536 25.5297 104.875 24.3768 106.2 24.3768C107.448 24.3768 108.195 25.2919 108.45 25.7927C108.704 26.2844 108.853 26.9762 108.853 27.8138C108.853 28.7884 108.64 29.9466 108.233 31.0995Z" fill="#2968fe"/><path d="M88.8532 17.6869C90.4727 17.6869 91.7856 16.357 91.7856 14.7164C91.7856 13.0759 90.4727 11.746 88.8532 11.746C87.2338 11.746 85.9209 13.0759 85.9209 14.7164C85.9209 16.357 87.2338 17.6869 88.8532 17.6869Z" fill="#2968fe"/><path d="M34.5497 29.7481C33.5556 29.087 32.2166 29.3662 31.564 30.3768C30.2001 32.4826 26.1563 37.4346 19.0451 37.4346C14.9693 37.4346 11.3044 35.7701 8.62986 33.0645C5.96248 30.3588 4.31938 26.6426 4.31582 22.5138C4.31582 18.3851 5.95893 14.6724 8.62986 11.9631C11.3008 9.26108 15.3285 7.39666 19.5679 7.61823C19.1216 12.2676 20.08 15.4524 21.4724 17.805C23.9406 21.9626 28.8273 23.7748 32.4851 21.1177C35.5224 18.9129 35.6344 14.912 34.3398 11.9019C33.3992 9.71503 31.2368 7.78396 30.3334 7.0526C27.6269 4.86212 24.6395 4.0533 24.6395 4.0533C24.7924 3.54171 24.9222 3.16342 24.9951 2.96888C25.4237 1.84121 24.8653 0.580251 23.7539 0.146119C22.6407 -0.288012 21.3959 0.27762 20.9674 1.40348C20.8251 1.77817 20.6046 2.43207 20.3681 3.28232C8.85748 2.50772 0 11.7794 0 22.5174C0 33.2554 8.52495 41.8048 19.0398 41.8048C28.2707 41.8048 33.4418 35.4297 35.1667 32.7727C35.8194 31.7657 35.5437 30.4092 34.5461 29.7481H34.5497ZM23.8233 8.38021C23.9495 8.42344 26.8712 9.33314 29.2558 12.0046C31.756 14.8093 30.602 17.1331 29.9316 17.5997C28.5819 18.5364 26.7058 17.5042 25.9216 16.5855C25.1374 15.6668 24.5968 14.586 24.2376 13.4385C23.5441 11.2174 23.7841 8.85758 23.8233 8.38021Z" fill="#2968fe"/><path d="M154.085 22.3191C152.673 20.8672 150.678 19.9521 148.475 19.9521C146.554 19.9521 145.299 20.7249 145.162 20.7933C144.831 20.3664 144.349 20.0584 143.78 19.9737C142.601 19.7972 141.504 20.624 141.335 21.8183L139.529 34.3055C139.267 36.078 137.757 37.3966 135.983 37.3966C133.337 37.3966 132.296 34.9377 132.398 33.7794C132.412 33.6029 132.412 33.4192 132.437 33.2354L133.989 22.4542C134.16 21.2599 133.347 20.1484 132.168 19.9773C131.171 19.8296 130.241 20.4006 129.871 21.3013C129.599 21.1068 128.082 20.0079 125.92 20.0079C124.253 20.0079 122.733 20.6222 121.435 21.5085C119.482 22.8505 117.926 24.8212 116.786 27.0153C115.657 29.213 114.942 31.643 114.935 34.037C114.935 35.4007 115.179 36.7679 115.803 38.0289C116.42 39.2863 118.332 41.8442 121.906 41.8442C125.669 41.8442 128.333 38.753 129.138 37.7569C129.48 38.3603 131.496 41.774 135.979 41.774C139.891 41.774 143.215 38.8737 143.793 34.9503L144.856 27.8853V27.8637C144.982 26.9702 146.057 24.3601 148.475 24.3276C151.059 24.2916 152.168 26.8423 152.06 27.9448L150.54 38.7603C150.362 39.9546 151.171 41.0696 152.35 41.2498C153.529 41.4299 154.629 40.6103 154.807 39.416C154.807 39.416 156.379 28.3393 156.379 27.9466C156.379 25.7741 155.508 23.7746 154.089 22.3263V22.3227L154.085 22.3191ZM127.961 31.0972C127.355 32.8283 126.314 34.545 125.153 35.7213C124.577 36.314 123.274 37.4669 121.913 37.4669C120.791 37.4669 119.939 36.6797 119.664 36.051C119.413 35.4817 119.26 34.8675 119.26 34.0298C119.26 33.0553 119.473 31.897 119.881 30.7441C120.487 29.013 121.527 27.2963 122.688 26.12C123.265 25.5273 124.604 24.3745 125.928 24.3745C127.177 24.3745 127.924 25.2896 128.178 25.7903C128.432 26.2821 128.582 26.9738 128.582 27.8115C128.582 28.786 128.368 29.9443 127.961 31.0972Z" fill="#2968fe"/><path d="M156.175 38.5262V38.1803H158.613V38.5262H157.597V41.2679H157.19V38.5262H156.175Z" fill="#2968fe"/><path d="M159.518 38.1803L160.48 40.7761L161.445 38.1803H162V41.2679H161.616V38.6991H161.609L160.658 41.2679H160.313L159.361 38.6991H159.354V41.2679H158.97V38.1803H159.525H159.518Z" fill="#2968fe"/></svg> &middot; Your data is secure and confidential</p>
+  </footer>
+
+  <script src="owl-sdk.js"></script>
+  <script>
+    // ── DATA (would come from Salesforce via API) ─────────────────────────────
+    let siteData = {
+      address: '123 Business Park, London',
+      postcode: 'SW1A 1AA',
+      contact: 'John Smith',
+      days: ['Mon','Tue','Wed','Thu','Fri'],
+      hours: '09:00 - 17:00 (Mon-Fri)',
+      installDate: '15 July 2026'
+    };
+
+    let quoteProducts = [
+      { id:'d1', name:'C7 Firewall®', type:'Freestanding', location:'Kitchen area, 2nd Floor', features:['Hot','Cold','Ambient','Sparkling'] },
+      { id:'d2', name:'C100', type:'Desktop', location:'Reception', features:['Hot','Cold'] },
+      { id:'d3', name:'Instanta 5L', type:'Boiler', location:'Staff Kitchen', features:['Hot'] }
+    ];
+
+    // ── STATE ─────────────────────────────────────────────────────────────────
+    let currentPage = 0;
+    const totalSteps = 4;
+    const dispenserStatus = {};
+    const dispenserData = {};
+    quoteProducts.forEach(p => dispenserStatus[p.id] = 'pending');
+
+    // ── NAVIGATION ────────────────────────────────────────────────────────────
+    function goTo(page) {
+      const cur = document.getElementById('page-' + currentPage);
+      const nxt = document.getElementById('page-' + page);
+      if (!cur || !nxt) return;
+      cur.classList.add('fade-out');
+      setTimeout(() => {
+        cur.classList.remove('active','fade-out');
+        nxt.classList.add('active');
+        currentPage = page;
+        updateUI();
+        window.scrollTo({top:0, behavior:'smooth'});
+        saveDraft();
+      }, 300);
+    }
+
+    function updateUI() {
+      // Progress bar
+      const pct = currentPage === 0 ? 0 : currentPage >= 4 ? 100 : Math.round((currentPage / totalSteps) * 100);
+      const bar = document.getElementById('progressBar');
+      bar.style.width = pct + '%';
+      bar.classList.toggle('complete', currentPage >= 4);
+
+      // Step dots (pages 1-4 map to dots 0-3; no highlight on welcome/success)
+      document.querySelectorAll('.dot').forEach((d,i) => {
+        d.classList.remove('active','done');
+        if (currentPage >= 1 && currentPage <= 4) {
+          const dotIndex = currentPage - 1;
+          if (i === dotIndex) d.classList.add('active');
+          else if (i < dotIndex) d.classList.add('done');
+        }
+      });
+
+      // Header/footer visibility on success
+      const isSuccess = currentPage === 5;
+      document.getElementById('formHeader').style.display = isSuccess ? 'none' : '';
+      document.getElementById('formFooter').style.display = isSuccess ? 'none' : '';
+    }
+
+    // ── BADGE HELPER ──────────────────────────────────────────────────────────
+    function featureBadge(f) {
+      const map = { 'Hot':'badge-hot','Cold':'badge-cold','Ambient':'badge-ambient','Sparkling':'badge-sparkling','Extra Hot':'badge-extra-hot' };
+      return `<span class="badge ${map[f]||'badge-ambient'}">${f}</span>`;
+    }
+
+    // ── RENDER: Review Dispensers ──────────────────────────────────────────────
+    function renderReviewDispensers() {
+      const el = document.getElementById('reviewDispensers');
+      el.innerHTML = quoteProducts.map((p,i) => `
+        <div class="dispenser-review">
+          <div class="dispenser-review-top">
+            <h4>Dispenser ${i+1}: ${p.name} — ${p.type}</h4>
+            <div class="badges">${p.features.map(featureBadge).join('')}</div>
+          </div>
+          <span class="location-tag"><span class="material-symbols-outlined">location_on</span> ${p.location}</span>
+        </div>
+      `).join('');
+    }
+
+    // ── RENDER: Dispenser Accordion Checks ────────────────────────────────────
+    function renderAccordions() {
+      const el = document.getElementById('dispenserAccordions');
+      el.innerHTML = quoteProducts.map((p, i) => {
+        const isDone = dispenserStatus[p.id] === 'done';
+        const statusHTML = isDone
+          ? `<span class="status-badge status-done"><span class="material-symbols-outlined">check_circle</span>Done</span>`
+          : `<span class="status-badge status-pending"><span class="material-symbols-outlined">pending</span>To Do</span>`;
+
+        const isDesktop = p.type === 'Desktop';
+        const isBoiler = p.type === 'Boiler';
+        const isCountertop = isDesktop || isBoiler;
+
+        // Build question sections
+        let body = '';
+
+        // Product image placeholder
+        body += `<div class="product-image"><span class="material-symbols-outlined">image</span><p>${p.name} — ${p.type} &middot; ${p.features.join(', ')}</p><p style="margin-top:2px;font-size:11px;color:var(--text-muted);">${p.location}</p></div>`;
+
+        // Section: Installation Type + Photos
+        body += `<div class="check-section">
+          <div class="section-title"><span class="material-symbols-outlined">build</span> Installation Type</div>
+          <div class="field">
+            <label class="field-label">Is this replacing an existing ${isBoiler?'boiler':'dispenser'} or a new installation?</label>
+            <div class="pill-group">
+              <div class="pill"><input type="radio" name="${p.id}_install" id="${p.id}_install_new" value="new" onchange="onInstallTypeChange('${p.id}')"><label for="${p.id}_install_new">New Installation</label></div>
+              <div class="pill"><input type="radio" name="${p.id}_install" id="${p.id}_install_existing" value="existing" onchange="onInstallTypeChange('${p.id}')"><label for="${p.id}_install_existing">Replacing Existing</label></div>
+            </div>
+          </div>
+          <div class="field" id="${p.id}_photo_new" style="display:none">
+            <label class="field-label">Upload photo of new installation location</label>
+            <div class="dropzone" tabindex="0" role="button" onclick="document.getElementById('${p.id}_file_new').click()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('${p.id}_file_new').click()}" ondragover="dOver(event)" ondragleave="dLeave(event)" ondrop="dDrop(event,'${p.id}_file_new','${p.id}_fname_new')">
+              <span class="material-symbols-outlined">photo_camera</span>
+              <p>Drag & drop or click to upload</p>
+              <p class="file-name" id="${p.id}_fname_new"></p>
+            </div>
+            <input type="file" id="${p.id}_file_new" accept="image/*" style="display:none" onchange="showFileName(this,'${p.id}_fname_new')">
+          </div>
+          <div class="field" id="${p.id}_photo_existing" style="display:none">
+            <label class="field-label">Upload photo of existing ${isBoiler?'boiler':'dispenser'} & installation</label>
+            <div class="dropzone" tabindex="0" role="button" onclick="document.getElementById('${p.id}_file_existing').click()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('${p.id}_file_existing').click()}" ondragover="dOver(event)" ondragleave="dLeave(event)" ondrop="dDrop(event,'${p.id}_file_existing','${p.id}_fname_existing')">
+              <span class="material-symbols-outlined">photo_camera</span>
+              <p>Drag & drop or click to upload</p>
+              <p class="file-name" id="${p.id}_fname_existing"></p>
+            </div>
+            <input type="file" id="${p.id}_file_existing" accept="image/*" style="display:none" onchange="showFileName(this,'${p.id}_fname_existing')">
+          </div>
+        </div>`;
+
+        // Section: Space & Location
+        body += buildYNUSection(p.id, 'space', 'Space & Location', 'location_on',
+          `Location suitable based on minimum required space?`,
+          'The unit needs somewhere to be positioned with an air gap to allow it to function properly.',
+          `Use the minimum space required information to confirm the ${isBoiler?'boiler':'dispenser'} fits in the location.`
+        );
+
+        // Boiler-only: Filter location
+        if (isBoiler) {
+          body += buildYNUSection(p.id, 'filter_location', 'Water Filter', 'filter_alt',
+            'Is there a suitable location to install the water filter?',
+            'The scale reduction filter needs to be able to stand in a base cabinet or location.',
+            'Use the minimum space required information to confirm filter will fit in the location.'
+          );
+        }
+
+        // Section: Power Supply
+        body += `<div class="check-section">
+          <div class="section-title"><span class="material-symbols-outlined">bolt</span> Power Supply</div>
+          ${buildYNUField(p.id, 'socket_distance', '13amp socket within 1m?',
+            'The power cable must plug directly into a socket (extension leads not acceptable).',
+            `Measure how far the power socket is from the back of the ${isBoiler?'boiler':'dispenser'}.`)}
+          ${buildYNUField(p.id, 'socket_working', 'Socket is working?',
+            `The ${isBoiler?'boiler':'dispenser'} needs power to function.`,
+            'Use a working electrical appliance to test if the socket is working.')}
+        </div>`;
+
+        // Section: Mains Water
+        body += `<div class="check-section">
+          <div class="section-title"><span class="material-symbols-outlined">water</span> Mains Water</div>
+          ${buildYNUField(p.id, 'water_distance', 'Mains water within 5m?',
+            'This is the maximum distance we can extend the water using micro-bore tube.',
+            `How far is the 15mm mains cold water supply from the back of the ${isBoiler?'boiler':'dispenser'}.`)}
+          ${buildYNUField(p.id, 'water_pressure', 'Has good pressure (min 2 bar)?',
+            `The ${isBoiler?'boiler':'dispenser'} needs good water pressure to go through the filters and ${isBoiler?'fill':'dispense'} correctly.`,
+            'Find the closest cold tap and try to stop the water flow with your thumb — if unable, the pressure is generally good.')}
+          ${buildYNUField(p.id, 'shutoff_valve', 'Working shut-off valve available?',
+            'We need to isolate the water to make a connection to the water supply.',
+            'Find an isolation valve for the cold water pipe, turn off and check the cold water has stopped.')}
+          ${buildYNUField(p.id, 'flow_rate', 'Has good flow rate (min 4L/min)?',
+            `We need a good water flow for the ${isBoiler?'boiler':'dispenser'} to function correctly.`,
+            'If an unrestricted cold water tap can fill a 1L jug in under 15 seconds, the water flow is good.')}
+        </div>`;
+
+        // Section: Countertop (Desktop + Boiler only)
+        if (isCountertop) {
+          body += `<div class="check-section">
+            <div class="section-title"><span class="material-symbols-outlined">countertops</span> Countertop Checks</div>
+            ${buildYNUField(p.id, 'countertop_available', 'Suitable countertop available?',
+              'We can only drill certain worktop materials to fit the micro-bore tube and power cable.',
+              'Inspect the countertop to confirm it is solid wood or kitchen laminate.')}
+            ${buildYNUField(p.id, 'dimensions_fit', 'Dimensions fit (incl. under cupboards)?',
+              `The ${isBoiler?'boiler':'dispenser'} needs to fit on a countertop safely and under any cupboards above.`,
+              'Use the minimum space required information to confirm it fits onto the countertop.')}
+            <div class="field">
+              <label class="field-label">Surface material (we can only drill Wood or Laminate)</label>
+              <div class="pill-group">
+                <div class="pill"><input type="radio" name="${p.id}_surface" id="${p.id}_surface_wood" value="wood"><label for="${p.id}_surface_wood">Wood</label></div>
+                <div class="pill"><input type="radio" name="${p.id}_surface" id="${p.id}_surface_laminate" value="laminate"><label for="${p.id}_surface_laminate">Laminate</label></div>
+                <div class="pill"><input type="radio" name="${p.id}_surface" id="${p.id}_surface_unable" value="unable" onchange="toggleSpecify('${p.id}')"><label for="${p.id}_surface_unable">Unable to Confirm</label></div>
+              </div>
+              <div id="${p.id}_specify_wrap" style="display:none;margin-top:10px;">
+                <label class="field-label" for="${p.id}_material_other">Please specify the countertop material</label>
+                <input type="text" id="${p.id}_material_other" placeholder="e.g. Granite, Marble, Concrete...">
+              </div>
+            </div>
+            <div class="field">
+              <label class="field-label">Customer accepts drilling through countertop?</label>
+              <div class="pill-group">
+                <div class="pill"><input type="radio" name="${p.id}_drilling" id="${p.id}_drilling_yes" value="yes"><label for="${p.id}_drilling_yes">Yes</label></div>
+                <div class="pill"><input type="radio" name="${p.id}_drilling" id="${p.id}_drilling_no" value="no"><label for="${p.id}_drilling_no">No</label></div>
+              </div>
+            </div>
+          </div>`;
+        }
+
+        // Save button
+        body += `<div class="error-box" id="${p.id}_accError" style="margin-top:12px"></div>
+        <div style="display:flex;justify-content:flex-end;padding-top:20px;margin-top:20px;border-top:1px solid var(--border);">
+          <button class="btn btn-primary" onclick="markDone('${p.id}')">Save & Close</button>
+        </div>`;
+
+        return `<div class="accordion" id="acc-${p.id}">
+          <button class="accordion-header" id="header-${p.id}" aria-expanded="false" onclick="toggleAcc('${p.id}')">
+            <div class="accordion-header-left">
+              <span class="acc-label">Dispenser ${i+1}</span>
+              <span class="acc-title">${p.name} <span class="acc-type">(${p.type})</span></span>
+            </div>
+            <div class="accordion-header-right">
+              ${statusHTML}
+              <span class="material-symbols-outlined acc-chevron" id="chev-${p.id}">expand_more</span>
+            </div>
+          </button>
+          <div class="accordion-body" id="body-${p.id}" role="region" aria-labelledby="header-${p.id}">${body}</div>
+        </div>`;
+      }).join('');
+    }
+
+    // ── BUILDER: Yes/No/Unable section (standalone with border) ───────────────
+    function buildYNUSection(pid, key, title, icon, question, why, how) {
+      return `<div class="check-section">
+        <div class="section-title"><span class="material-symbols-outlined">${icon}</span> ${title}</div>
+        ${buildYNUField(pid, key, question, why, how)}
+      </div>`;
+    }
+
+    // ── BUILDER: Yes/No/Unable field ──────────────────────────────────────────
+    function buildYNUField(pid, key, question, why, how) {
+      const name = `${pid}_${key}`;
+      return `<div class="field">
+        <label class="field-label">${question}</label>
+        <div class="pill-group">
+          <div class="pill"><input type="radio" name="${name}" id="${name}_yes" value="yes"><label for="${name}_yes">Yes</label></div>
+          <div class="pill"><input type="radio" name="${name}" id="${name}_no" value="no"><label for="${name}_no">No</label></div>
+          <div class="pill"><input type="radio" name="${name}" id="${name}_unable" value="unable"><label for="${name}_unable">Unable to Confirm</label></div>
+        </div>
+        <div class="helper-box">
+          <button class="helper-toggle" aria-expanded="false" onclick="toggleHelp('${name}_help')">
+            <span class="material-symbols-outlined">help</span> Why & How to check
+            <span class="material-symbols-outlined" style="margin-left:auto;" id="${name}_help_icon">expand_more</span>
+          </button>
+          <div class="helper-content" id="${name}_help">
+            <p><strong>Why:</strong> ${why}</p>
+            <p><strong>How to check:</strong> ${how}</p>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    // ── ACCORDION TOGGLE ──────────────────────────────────────────────────────
+    function toggleAcc(id) {
+      const acc = document.getElementById('acc-' + id);
+      const isOpen = acc.classList.contains('open');
+      // Close all
+      document.querySelectorAll('.accordion').forEach(a => {
+        a.classList.remove('open');
+        const btn = a.querySelector('.accordion-header');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+      });
+      // Open clicked (if wasn't open)
+      if (!isOpen) {
+        acc.classList.add('open');
+        const btn = acc.querySelector('.accordion-header');
+        if (btn) btn.setAttribute('aria-expanded', 'true');
+      }
+    }
+
+    function saveDispenserFields(pid) {
+      const data = {};
+      const body = document.getElementById('body-' + pid);
+      if (!body) return;
+      body.querySelectorAll('input[type="radio"]:checked').forEach(r => { data[r.name] = r.value; });
+      body.querySelectorAll('input[type="text"]').forEach(t => { if(t.value) data[t.id] = t.value; });
+      dispenserData[pid] = data;
+    }
+
+    function saveAllFields() {
+      quoteProducts.forEach(p => saveDispenserFields(p.id));
+    }
+
+    function restoreAllFields() {
+      Object.keys(dispenserData).forEach(pid => {
+        const data = dispenserData[pid];
+        Object.keys(data).forEach(key => {
+          if (key.includes('_')) {
+            const radio = document.querySelector(`input[name="${key}"][value="${data[key]}"]`);
+            if (radio) { radio.checked = true; }
+          }
+          const textEl = document.getElementById(key);
+          if (textEl && textEl.type === 'text') textEl.value = data[key];
+        });
+        onInstallTypeChange(pid);
+        toggleSpecify(pid);
+      });
+    }
+
+    function markDone(id) {
+      saveAllFields();
+
+      const installType = getRadio(id + '_install');
+      const space = getRadio(id + '_space');
+      const errorEl = document.getElementById(id + '_accError');
+      if (!installType || !space) {
+        const errors = [];
+        if (!installType) errors.push('Please select installation type');
+        if (!space) errors.push('Please answer the space & location question');
+        errorEl.innerHTML = '<p><span class="material-symbols-outlined" style="font-size:16px">error</span> ' + errors.join('. ') + '</p>';
+        errorEl.classList.add('show');
+        return;
+      }
+      if (errorEl) errorEl.classList.remove('show');
+
+      dispenserStatus[id] = 'done';
+      renderAccordions();
+      restoreAllFields();
+      const next = quoteProducts.find(p => dispenserStatus[p.id] === 'pending');
+      if (next) toggleAcc(next.id);
+      saveDraft();
+    }
+
+    function validateChecksAndContinue() {
+      const pending = quoteProducts.filter(p => dispenserStatus[p.id] === 'pending');
+      const box = document.getElementById('checksErrors');
+      const list = document.getElementById('checksErrorList');
+      if (pending.length) {
+        list.innerHTML = pending.map((p) => {
+          const idx = quoteProducts.indexOf(p) + 1;
+          return '<li>Dispenser ' + idx + ': ' + p.name + ' — checks not completed</li>';
+        }).join('');
+        box.classList.add('show');
+        box.scrollIntoView({behavior:'smooth', block:'center'});
+        toggleAcc(pending[0].id);
+      } else {
+        box.classList.remove('show');
+        goTo(3);
+      }
+    }
+
+    function validatePage3() {
+      const box = document.getElementById('page3Errors');
+      if (!document.getElementById('deliveryAck').checked) {
+        box.classList.add('show');
+        box.scrollIntoView({behavior:'smooth', block:'center'});
+        return;
+      }
+      box.classList.remove('show');
+      goTo(4);
+    }
+
+    // ── INSTALL TYPE → PHOTO TOGGLE ──────────────────────────────────────────
+    function onInstallTypeChange(pid) {
+      const val = getRadio(pid + '_install');
+      const newEl = document.getElementById(pid + '_photo_new');
+      const existEl = document.getElementById(pid + '_photo_existing');
+      if (newEl) newEl.style.display = val === 'new' ? '' : 'none';
+      if (existEl) existEl.style.display = val === 'existing' ? '' : 'none';
+    }
+
+    // ── SURFACE SPECIFY TOGGLE ───────────────────────────────────────────────
+    function toggleSpecify(pid) {
+      const val = getRadio(pid + '_surface');
+      const wrap = document.getElementById(pid + '_specify_wrap');
+      if (wrap) wrap.style.display = val === 'unable' ? '' : 'none';
+    }
+    // Attach change listeners for surface pills (wood/laminate close specify)
+    document.addEventListener('change', (e) => {
+      if (e.target.name && e.target.name.endsWith('_surface')) {
+        const pid = e.target.name.replace('_surface','');
+        toggleSpecify(pid);
+      }
+    });
+
+    // ── HELPER TOGGLE ────────────────────────────────────────────────────────
+    function toggleHelp(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const isOpen = el.classList.toggle('open');
+      const icon = document.getElementById(id + '_icon');
+      if (icon) icon.textContent = isOpen ? 'expand_less' : 'expand_more';
+      const toggle = el.parentElement.querySelector('.helper-toggle');
+      if (toggle) toggle.setAttribute('aria-expanded', isOpen);
+    }
+
+    // ── FILE UPLOAD HELPERS ──────────────────────────────────────────────────
+    function showFileName(input, nameElId) {
+      const el = document.getElementById(nameElId);
+      if (el && input.files && input.files[0]) el.textContent = input.files[0].name;
+    }
+    function dOver(e) { e.preventDefault(); e.currentTarget.classList.add('dragover'); }
+    function dLeave(e) { e.currentTarget.classList.remove('dragover'); }
+    function dDrop(e, inputId, nameId) {
+      e.preventDefault(); e.currentTarget.classList.remove('dragover');
+      const input = document.getElementById(inputId);
+      if (input && e.dataTransfer.files.length) { input.files = e.dataTransfer.files; showFileName(input, nameId); }
+    }
+
+    // ── CHAR COUNT ───────────────────────────────────────────────────────────
+    function updateCharCount() {
+      const ta = document.getElementById('additionalNotes');
+      const ct = document.getElementById('charCount');
+      ct.textContent = ta.value.length + ' / 500';
+      ct.classList.toggle('over', ta.value.length >= 500);
+    }
+
+    // ── UTILITIES ────────────────────────────────────────────────────────────
+    function getRadio(name) {
+      const el = document.querySelector(`input[name="${name}"]:checked`);
+      return el ? el.value : null;
+    }
+
+    // ── VALIDATION (Page 4) ──────────────────────────────────────────────────
+    function validateDeclaration() {
+      const errors = [];
+      if (!getRadio('readiness')) errors.push('Please select your installation readiness');
+      if (!document.getElementById('fullName').value.trim()) errors.push('Full name is required');
+      if (!document.getElementById('legalAgree').checked) errors.push('You must agree to the legal terms');
+
+      const box = document.getElementById('validationErrors');
+      const list = document.getElementById('errorList');
+      if (errors.length) {
+        list.innerHTML = errors.map(e => '<li>' + e + '</li>').join('');
+        box.classList.add('show');
+        box.scrollIntoView({behavior:'smooth', block:'center'});
+        return false;
+      }
+      box.classList.remove('show');
+      return true;
+    }
+
+    // ── SUBMIT ───────────────────────────────────────────────────────────────
+    function submitAssessment() {
+      if (!validateDeclaration()) return;
+
+      saveAllFields();
+
+      const formData = {
+        referenceNumber: 'REF-2026-' + Math.floor(1000 + Math.random() * 9000),
+        submittedAt: new Date().toISOString(),
+        site: siteData,
+        dispensers: quoteProducts.map(p => {
+          const isCountertop = p.type === 'Desktop' || p.type === 'Boiler';
+          return {
+            id: p.id, model: p.name, type: p.type, location: p.location, features: p.features,
+            checks: {
+              installType: getRadio(p.id + '_install'),
+              photoNew: document.getElementById(p.id + '_file_new')?.files[0]?.name || null,
+              photoExisting: document.getElementById(p.id + '_file_existing')?.files[0]?.name || null,
+              spaceSuitable: getRadio(p.id + '_space'),
+              filterLocation: p.type === 'Boiler' ? getRadio(p.id + '_filter_location') : undefined,
+              socketDistance: getRadio(p.id + '_socket_distance'),
+              socketWorking: getRadio(p.id + '_socket_working'),
+              waterDistance: getRadio(p.id + '_water_distance'),
+              waterPressure: getRadio(p.id + '_water_pressure'),
+              shutoffValve: getRadio(p.id + '_shutoff_valve'),
+              flowRate: getRadio(p.id + '_flow_rate'),
+              countertopAvailable: isCountertop ? getRadio(p.id + '_countertop_available') : undefined,
+              dimensionsFit: isCountertop ? getRadio(p.id + '_dimensions_fit') : undefined,
+              surfaceMaterial: isCountertop ? getRadio(p.id + '_surface') : undefined,
+              materialOther: isCountertop ? document.getElementById(p.id + '_material_other')?.value : undefined,
+              drillingAccept: isCountertop ? getRadio(p.id + '_drilling') : undefined,
             }
-        }
+          };
+        }),
+        additionalNotes: document.getElementById('additionalNotes').value,
+        deliveryAcknowledged: document.getElementById('deliveryAck').checked,
+        readiness: getRadio('readiness'),
+        fullName: document.getElementById('fullName').value.trim(),
+        additionalComments: document.getElementById('additionalComments').value,
+        legalAgreed: document.getElementById('legalAgree').checked
+      };
 
-        function navigateTo(page) {
-            document.querySelectorAll('[data-owl-page]').forEach(p => p.classList.add('hidden'));
-            document.getElementById('page-' + page).classList.remove('hidden');
-            currentPage = page;
-            initProgressBar();
-            window.scrollTo(0, 0);
-        }
+      // Build line_items array for PIA_SubmissionHandler
+      const lineItems = quoteProducts.map(p => {
+        const isCountertop = p.type === 'Desktop' || p.type === 'Boiler';
+        const space = getRadio(p.id + '_space');
+        const power = getRadio(p.id + '_socket_distance') === 'yes' && getRadio(p.id + '_socket_working') === 'yes';
+        const water = getRadio(p.id + '_water_distance') === 'yes' && getRadio(p.id + '_water_pressure') === 'yes';
+        const drain = getRadio(p.id + '_shutoff_valve') === 'yes' && getRadio(p.id + '_flow_rate') === 'yes';
+        let result = 'Pass';
+        if (space === 'no' || getRadio(p.id + '_socket_distance') === 'no' || getRadio(p.id + '_water_distance') === 'no') result = 'Fail';
+        else if (space === 'unable' || getRadio(p.id + '_socket_distance') === 'unable' || getRadio(p.id + '_water_distance') === 'unable') result = 'Conditional';
 
-        function renderProductSections(items) {
-            const container = document.getElementById('product-sections');
-            container.innerHTML = '';
+        return {
+          oliId: p.oliId || p.id,
+          productName: p.name,
+          productFamily: p.type,
+          locationSuitable: space === 'yes' ? 'Yes' : space === 'no' ? 'No' : 'Needs_Work',
+          powerAvailable: power,
+          waterSupply: water,
+          drainage: drain,
+          spaceDimensions: '',
+          notes: JSON.stringify(dispenserData[p.id] || {}),
+          assessmentResult: result
+        };
+      });
 
-            if (!items || items.length === 0) {
-                container.innerHTML = '<p style="color: var(--gray-700);">No products found for this opportunity.</p>';
-                return;
+      // If OWL SDK is initialized, submit via platform
+      if (typeof OwlForms !== 'undefined' && OwlForms.isInitialized()) {
+        OwlForms.setFieldData('site_address', siteData.address + ', ' + siteData.postcode);
+        OwlForms.setFieldData('general_notes', formData.additionalNotes);
+        OwlForms.setFieldData('submitter_name', formData.fullName);
+        OwlForms.setFieldData('readiness', formData.readiness);
+        OwlForms.setFieldData('line_items', lineItems);
+        OwlForms.setFieldData('full_submission', formData);
+
+        OwlForms.submit().then(() => {
+          document.getElementById('refNumber').textContent = formData.referenceNumber;
+          goTo(5);
+        }).catch(err => {
+          console.error('OWL submission failed:', err);
+          alert('Submission failed. Please try again.');
+        });
+      } else {
+        // Fallback: standalone mode
+        document.getElementById('refNumber').textContent = formData.referenceNumber;
+        console.log('PIA Submission (standalone):', JSON.stringify(formData, null, 2));
+        try { localStorage.removeItem('pia_draft'); } catch(e) {}
+        goTo(5);
+      }
+    }
+
+    // ── DRAFT PERSISTENCE ─────────────────────────────────────────────────────
+    function saveDraft() {
+      const draft = {
+        currentPage,
+        dispenserStatus: {...dispenserStatus},
+        dispenserData: {...dispenserData},
+        additionalNotes: document.getElementById('additionalNotes')?.value || '',
+        deliveryAck: document.getElementById('deliveryAck')?.checked || false,
+        readiness: getRadio('readiness'),
+        fullName: document.getElementById('fullName')?.value || '',
+        additionalComments: document.getElementById('additionalComments')?.value || '',
+        savedAt: new Date().toISOString()
+      };
+      try { localStorage.setItem('pia_draft', JSON.stringify(draft)); } catch(e) {}
+    }
+
+    function loadDraft() {
+      try {
+        const raw = localStorage.getItem('pia_draft');
+        if (!raw) return;
+        const draft = JSON.parse(raw);
+        if (!draft.savedAt) return;
+        const ago = Date.now() - new Date(draft.savedAt).getTime();
+        if (ago > 24*60*60*1000) { localStorage.removeItem('pia_draft'); return; }
+
+        const banner = document.createElement('div');
+        banner.className = 'info-banner';
+        banner.style.cssText = 'margin:12px 0;cursor:pointer;';
+        banner.innerHTML = `<span class="material-symbols-outlined">restore</span><p>You have a saved draft from ${new Date(draft.savedAt).toLocaleString()}. <strong>Click here to resume</strong> or continue fresh.</p>`;
+        banner.onclick = () => {
+          Object.assign(dispenserStatus, draft.dispenserStatus || {});
+          Object.assign(dispenserData, draft.dispenserData || {});
+          renderAccordions();
+          restoreAllFields();
+          if (draft.additionalNotes) document.getElementById('additionalNotes').value = draft.additionalNotes;
+          if (draft.deliveryAck) document.getElementById('deliveryAck').checked = true;
+          if (draft.fullName) document.getElementById('fullName').value = draft.fullName;
+          if (draft.additionalComments) document.getElementById('additionalComments').value = draft.additionalComments;
+          if (draft.readiness) { const r = document.getElementById('r_'+draft.readiness); if(r) r.checked = true; }
+          if (draft.currentPage > 0) goTo(draft.currentPage);
+          banner.remove();
+        };
+        document.querySelector('.form-body').prepend(banner);
+      } catch(e) {}
+    }
+
+    // ── INIT ─────────────────────────────────────────────────────────────────
+    async function initPIA() {
+      // Try to initialize OWL SDK if token is present
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get('token');
+      const baseUrl = document.querySelector('meta[name="owl-base-url"]')?.content
+        || localStorage.getItem('owl_base_url') || '';
+
+      if (token && baseUrl && typeof OwlForms !== 'undefined') {
+        try {
+          await OwlForms.init({ baseUrl, token, debug: true });
+          const prefill = OwlForms.getPrefillData();
+
+          if (prefill) {
+            // Override site data if available
+            if (prefill.site_address) siteData.address = prefill.site_address;
+            if (prefill.site_postcode) siteData.postcode = prefill.site_postcode;
+            if (prefill.site_contact) siteData.contact = prefill.site_contact;
+            if (prefill.install_date) siteData.installDate = prefill.install_date;
+
+            // Override products from Opportunity Line Items
+            const olis = prefill.opportunity_line_items || prefill.lineItems || [];
+            if (olis.length > 0) {
+              quoteProducts = olis.map((oli, i) => ({
+                id: 'd' + (i + 1),
+                oliId: oli.Id || oli.oliId || '',
+                name: oli.Product2?.Name || oli.Name || oli.productName || 'Product ' + (i + 1),
+                type: oli.Product2?.Family || oli.productFamily || 'Unknown',
+                location: oli.Location__c || oli.location || 'TBC',
+                features: oli.features || []
+              }));
+              quoteProducts.forEach(p => dispenserStatus[p.id] = 'pending');
             }
+          }
 
-            productData = items;
-
-            items.forEach((item, idx) => {
-                const section = document.createElement('div');
-                section.className = 'product-section';
-                section.setAttribute('data-product-index', idx);
-
-                const productName = item.Name || item.Product2?.Name || item.productName || 'Product ' + (idx + 1);
-                const productFamily = item.Product2?.Family || item.productFamily || '';
-
-                section.innerHTML = `
-                    <h3>${productName} ${productFamily ? '<span class="product-badge">' + productFamily + '</span>' : ''}</h3>
-                    <input type="hidden" name="li_${idx}_oliId" value="${item.Id || item.oliId || ''}">
-                    <input type="hidden" name="li_${idx}_productName" value="${productName}">
-                    <input type="hidden" name="li_${idx}_productFamily" value="${productFamily}">
-                    <div class="grid-2">
-                        <div class="field-group">
-                            <label>Location Suitable?</label>
-                            <select name="li_${idx}_locationSuitable">
-                                <option value="">-- Select --</option>
-                                <option value="Yes">Yes</option>
-                                <option value="No">No</option>
-                                <option value="Needs_Work">Needs Work</option>
-                            </select>
-                        </div>
-                        <div class="field-group">
-                            <label>Space Dimensions</label>
-                            <input type="text" name="li_${idx}_spaceDimensions" placeholder="e.g. 2m x 1.5m">
-                        </div>
-                    </div>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="power_${idx}" name="li_${idx}_powerAvailable">
-                        <label for="power_${idx}">Power supply available</label>
-                    </div>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="water_${idx}" name="li_${idx}_waterSupply">
-                        <label for="water_${idx}">Water supply available</label>
-                    </div>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="drain_${idx}" name="li_${idx}_drainage">
-                        <label for="drain_${idx}">Drainage available</label>
-                    </div>
-                    <div class="field-group">
-                        <label>Assessment Result</label>
-                        <select name="li_${idx}_assessmentResult">
-                            <option value="">-- Select --</option>
-                            <option value="Pass">Pass - Ready for installation</option>
-                            <option value="Conditional">Conditional - Work needed first</option>
-                            <option value="Fail">Fail - Cannot install here</option>
-                        </select>
-                    </div>
-                    <div class="field-group">
-                        <label>Notes for this product</label>
-                        <textarea name="li_${idx}_notes" placeholder="Any issues, observations, or requirements..."></textarea>
-                    </div>
-                `;
-                container.appendChild(section);
-            });
+          // Populate review fields
+          document.getElementById('rv_address').textContent = siteData.address;
+          document.getElementById('rv_postcode').textContent = siteData.postcode;
+          document.getElementById('rv_contact').textContent = siteData.contact;
+          document.getElementById('rv_hours').textContent = siteData.hours;
+          document.getElementById('rv_date').textContent = siteData.installDate;
+        } catch (err) {
+          console.warn('OWL SDK init failed, using fallback data:', err);
         }
+      }
 
-        function collectLineItemData() {
-            const lineItems = [];
-            const sections = document.querySelectorAll('.product-section');
+      renderReviewDispensers();
+      renderAccordions();
+      updateUI();
+      loadDraft();
+    }
 
-            sections.forEach((section, idx) => {
-                const get = (name) => {
-                    const el = section.querySelector(`[name="li_${idx}_${name}"]`);
-                    if (!el) return '';
-                    if (el.type === 'checkbox') return el.checked;
-                    return el.value;
-                };
-
-                lineItems.push({
-                    oliId: get('oliId'),
-                    productName: get('productName'),
-                    productFamily: get('productFamily'),
-                    locationSuitable: get('locationSuitable'),
-                    powerAvailable: get('powerAvailable'),
-                    waterSupply: get('waterSupply'),
-                    drainage: get('drainage'),
-                    spaceDimensions: get('spaceDimensions'),
-                    notes: get('notes'),
-                    assessmentResult: get('assessmentResult')
-                });
-            });
-
-            return lineItems;
-        }
-
-        async function submitPIA() {
-            const btn = document.getElementById('submitBtn');
-            btn.disabled = true;
-            btn.textContent = 'Submitting...';
-
-            try {
-                const lineItems = collectLineItemData();
-                OwlForms.setFieldData('line_items', lineItems);
-
-                await OwlForms.submit();
-            } catch (err) {
-                console.error('Submission failed:', err);
-                btn.disabled = false;
-                btn.textContent = 'Submit Assessment';
-            }
-        }
-
-        async function initForm() {
-            initProgressBar();
-
-            try {
-                const params = new URLSearchParams(window.location.search);
-                const token = params.get('token');
-                const baseUrl = document.querySelector('meta[name="owl-base-url"]')?.content
-                    || localStorage.getItem('owl_base_url') || '';
-
-                if (!token || !baseUrl) {
-                    console.warn('OWL SDK: No token or base URL found. Form will run in standalone mode.');
-                    renderProductSections([]);
-                    return;
-                }
-
-                await OwlForms.init({ baseUrl, token, debug: true });
-
-                const prefill = OwlForms.getPrefillData();
-                if (prefill) {
-                    OwlForms.applyPrefill();
-
-                    const oliCollection = prefill.opportunity_line_items || prefill.lineItems || [];
-                    renderProductSections(oliCollection);
-                } else {
-                    renderProductSections([]);
-                }
-            } catch (err) {
-                console.error('Form init failed:', err);
-                renderProductSections([]);
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', initForm);
-    </script>
+    document.addEventListener('DOMContentLoaded', initPIA);
+  </script>
 </body>
 </html>
