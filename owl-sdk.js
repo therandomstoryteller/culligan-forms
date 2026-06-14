@@ -881,9 +881,41 @@
     function enableClickToTag(taggedFields, state) {
         let lastHighlighted = null;
         let currentElement = null;
+        let hoverEl = null;
+
+        // Hover highlight: show which element will be selected on click
+        document.addEventListener('mouseover', (e) => {
+            if (state.mode !== 'tag') return;
+            if (e.target.closest('#owl-mapper-toolbar') || e.target.closest('#owl-tag-popup') || e.target.closest('.owl-tag-label')) return;
+            if (hoverEl && hoverEl !== lastHighlighted) hoverEl.style.outline = '';
+            if (e.target !== lastHighlighted) {
+                e.target.style.outline = '2px dashed #2196f3';
+                hoverEl = e.target;
+            }
+        }, true);
+        document.addEventListener('mouseout', (e) => {
+            if (hoverEl && hoverEl !== lastHighlighted) {
+                hoverEl.style.outline = '';
+                hoverEl = null;
+            }
+        }, true);
+
+        function addTagLabel(el, key) {
+            // Remove existing label if any
+            const existing = el.querySelector('.owl-tag-label');
+            if (existing) existing.remove();
+            const label = document.createElement('span');
+            label.className = 'owl-tag-label';
+            label.textContent = key;
+            label.style.cssText = 'position:absolute;top:-10px;left:4px;background:#4caf50;color:#fff;font-size:10px;padding:2px 6px;border-radius:3px;z-index:9999;font-family:monospace;pointer-events:none;white-space:nowrap;';
+            el.style.position = el.style.position || 'relative';
+            el.appendChild(label);
+        }
 
         function selectElement(el) {
-            if (lastHighlighted) lastHighlighted.style.outline = '';
+            if (lastHighlighted && !lastHighlighted.getAttribute('data-owl-tagged')) {
+                lastHighlighted.style.outline = '';
+            }
             el.style.outline = '3px solid #ff5722';
             lastHighlighted = el;
             currentElement = el;
@@ -901,11 +933,11 @@
                     const sib = el.nextElementSibling;
                     if (sib) selectElement(sib);
                 }
-            });
+            }, addTagLabel);
         }
 
         document.addEventListener('click', (e) => {
-            if (e.target.closest('#owl-mapper-toolbar') || e.target.closest('#owl-tag-popup')) return;
+            if (e.target.closest('#owl-mapper-toolbar') || e.target.closest('#owl-tag-popup') || e.target.closest('.owl-tag-label')) return;
 
             if (state.mode === 'navigate') return;
 
@@ -916,7 +948,7 @@
             const elements = document.elementsFromPoint(e.clientX, e.clientY);
             let target = e.target;
             for (const el of elements) {
-                if (el.closest('#owl-mapper-toolbar') || el.closest('#owl-tag-popup')) continue;
+                if (el.closest('#owl-mapper-toolbar') || el.closest('#owl-tag-popup') || el.closest('.owl-tag-label')) continue;
                 if (el === document.body || el === document.documentElement) continue;
                 target = el;
                 break;
@@ -926,7 +958,7 @@
         }, true);
     }
 
-    function showTagPopup(element, taggedFields, nav) {
+    function showTagPopup(element, taggedFields, nav, addTagLabel) {
         let popup = document.getElementById('owl-tag-popup');
         if (popup) popup.remove();
 
@@ -945,6 +977,11 @@
         const hasParent = element.parentElement && element.parentElement !== document.body;
         const hasSibling = !!element.nextElementSibling;
 
+        // Build datalist options from previously tagged keys
+        const existingKeys = taggedFields.map(f => f.fieldKey);
+        const uniqueKeys = [...new Set(existingKeys)];
+        const datalistOptions = uniqueKeys.map(k => `<option value="${k}">`).join('');
+
         popup = document.createElement('div');
         popup.id = 'owl-tag-popup';
         popup.innerHTML = `
@@ -958,7 +995,8 @@
                     <button id="owl-nav-sibling" style="flex:1;padding:5px;background:${hasSibling ? '#fff3e0' : '#f5f5f5'};color:${hasSibling ? '#e65100' : '#bbb'};border:1px solid ${hasSibling ? '#ffcc80' : '#eee'};border-radius:4px;font-size:11px;cursor:${hasSibling ? 'pointer' : 'default'};" ${hasSibling ? '' : 'disabled'}>→ Sibling</button>
                 </div>
                 <label style="display:block;font-size:12px;font-weight:600;color:#333;margin-bottom:4px;">Field Key</label>
-                <input id="owl-tag-key" type="text" value="${existingKey}" placeholder="e.g. accountName" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;margin-bottom:10px;box-sizing:border-box;">
+                <input id="owl-tag-key" type="text" list="owl-key-suggestions" value="${existingKey}" placeholder="e.g. dispenser_title" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;margin-bottom:10px;box-sizing:border-box;">
+                <datalist id="owl-key-suggestions">${datalistOptions}</datalist>
                 <label style="display:block;font-size:12px;font-weight:600;color:#333;margin-bottom:4px;">Direction</label>
                 <select id="owl-tag-direction" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;margin-bottom:12px;box-sizing:border-box;">
                     <option value="Pre_fill">Pre-fill (SF → Form)</option>
@@ -994,13 +1032,16 @@
 
             element.style.outline = '3px solid #4caf50';
             element.setAttribute('data-owl-tagged', 'true');
+            if (addTagLabel) addTagLabel(element, key);
             document.getElementById('owl-mapper-count').textContent = taggedFields.length + ' fields tagged';
             popup.remove();
         });
 
         document.getElementById('owl-tag-cancel').addEventListener('click', () => {
             popup.remove();
-            element.style.outline = '';
+            if (!element.getAttribute('data-owl-tagged')) {
+                element.style.outline = '';
+            }
         });
     }
 
