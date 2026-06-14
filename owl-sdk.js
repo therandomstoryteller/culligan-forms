@@ -892,7 +892,9 @@
         _internal: {
             findFieldElements: findFieldElements,
             setFieldValue: setFieldValue,
-            getFieldValue: getFieldValue
+            getFieldValue: getFieldValue,
+            initPreviewMode: initPreviewMode,
+            initMapperMode: initMapperMode
         }
     };
 
