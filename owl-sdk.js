@@ -259,6 +259,99 @@
         }
     }
 
+    // --- PDF Capture ---
+
+    let _pdfLibLoaded = false;
+
+    async function loadPdfLibrary() {
+        if (_pdfLibLoaded) return true;
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js';
+            script.onload = () => { _pdfLibLoaded = true; resolve(true); };
+            script.onerror = () => { error('Failed to load html2pdf.js'); resolve(false); };
+            document.head.appendChild(script);
+        });
+    }
+
+    async function captureFormPdf() {
+        log('Capturing form as PDF...');
+        const loaded = await loadPdfLibrary();
+        if (!loaded) return null;
+
+        const pages = document.querySelectorAll('[data-owl-page]');
+
+        if (pages.length > 1) {
+            return await captureMultiPagePdf(pages);
+        }
+
+        const container = document.getElementById('owl-form-container') || document.body;
+        const opt = {
+            margin: 10,
+            filename: 'form-submission.pdf',
+            image: { type: 'jpeg', quality: 0.85 },
+            html2canvas: { scale: 2, useCORS: true, logging: false },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        };
+
+        try {
+            const pdfBlob = await html2pdf().set(opt).from(container).outputPdf('blob');
+            return await blobToBase64(pdfBlob);
+        } catch (err) {
+            error('PDF capture failed:', err);
+            return null;
+        }
+    }
+
+    async function captureMultiPagePdf(pages) {
+        const opt = {
+            margin: 10,
+            image: { type: 'jpeg', quality: 0.85 },
+            html2canvas: { scale: 2, useCORS: true, logging: false },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        const originalDisplay = [];
+        pages.forEach((page, i) => {
+            originalDisplay[i] = page.style.display;
+        });
+
+        pages.forEach(page => { page.style.display = 'block'; });
+
+        const wrapper = document.createElement('div');
+        pages.forEach(page => {
+            const clone = page.cloneNode(true);
+            clone.style.display = 'block';
+            clone.style.pageBreakAfter = 'always';
+            wrapper.appendChild(clone);
+        });
+
+        document.body.appendChild(wrapper);
+
+        try {
+            const pdfBlob = await html2pdf().set(opt).from(wrapper).outputPdf('blob');
+            return await blobToBase64(pdfBlob);
+        } catch (err) {
+            error('Multi-page PDF capture failed:', err);
+            return null;
+        } finally {
+            wrapper.remove();
+            pages.forEach((page, i) => { page.style.display = originalDisplay[i]; });
+        }
+    }
+
+    function blobToBase64(blob) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64 = reader.result.split(',')[1];
+                resolve(base64);
+            };
+            reader.readAsDataURL(blob);
+        });
+    }
+
     // --- Form Submission ---
 
     async function submit(options = {}) {
@@ -282,6 +375,15 @@
 
             if (options.showLoading !== false) {
                 showSubmitting(true);
+            }
+
+            if (_formConfig.generatePdf) {
+                log('PDF capture enabled, generating...');
+                const pdfBase64 = await captureFormPdf();
+                if (pdfBase64) {
+                    mergedData._pdf = pdfBase64;
+                    log('PDF captured, size:', Math.round(pdfBase64.length / 1024) + 'KB');
+                }
             }
 
             const result = await apiCall('submission', 'POST', {
@@ -888,6 +990,7 @@
         applyPrefill: applyPrefill,
         applyConditions: applyConditions,
         getMode: getMode,
+        captureFormPdf: captureFormPdf,
 
         _internal: {
             findFieldElements: findFieldElements,

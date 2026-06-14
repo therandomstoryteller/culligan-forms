@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="owl-base-url" content="">
+    <title>Pre-Installation Assessment</title>
+    <style>
+        :root {
+            --primary: #0070d2;
+            --primary-dark: #005fb2;
+            --success: #2e844a;
+            --warning: #fe9339;
+            --error: #ea001e;
+            --gray-100: #f3f3f3;
+            --gray-200: #e5e5e5;
+            --gray-700: #3e3e3c;
+            --gray-900: #181818;
+            --radius: 8px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--gray-100);
+            color: var(--gray-900);
+            line-height: 1.6;
+        }
+
+        .form-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .form-header {
+            background: white;
+            border-radius: var(--radius);
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            text-align: center;
+        }
+        .form-header h1 { font-size: 24px; color: var(--primary-dark); margin-bottom: 8px; }
+        .form-header p { color: var(--gray-700); }
+
+        .form-page {
+            background: white;
+            border-radius: var(--radius);
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .form-page h2 {
+            font-size: 18px;
+            color: var(--primary-dark);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        .field-group { margin-bottom: 20px; }
+        .field-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+        .field-group input,
+        .field-group textarea,
+        .field-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--gray-200);
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        .field-group input:focus,
+        .field-group textarea:focus,
+        .field-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0,112,210,0.1);
+        }
+        .field-group textarea { resize: vertical; min-height: 80px; }
+
+        .product-section {
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            background: var(--gray-100);
+        }
+        .product-section h3 {
+            font-size: 16px;
+            color: var(--gray-900);
+            margin-bottom: 16px;
+        }
+        .product-section .product-badge {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+
+        .checkbox-group { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+        .checkbox-group input[type="checkbox"] { width: 18px; height: 18px; }
+        .checkbox-group label { margin-bottom: 0; font-weight: normal; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+        .btn-submit {
+            display: block;
+            width: 100%;
+            padding: 14px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-submit:hover { background: var(--primary-dark); }
+        .btn-submit:disabled { background: var(--gray-200); color: var(--gray-700); cursor: not-allowed; }
+
+        .nav-buttons { display: flex; gap: 12px; margin-top: 20px; }
+        .btn-nav {
+            padding: 10px 20px;
+            border: 1px solid var(--gray-200);
+            border-radius: 4px;
+            background: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .btn-nav.primary { background: var(--primary); color: white; border: none; }
+
+        .hidden { display: none; }
+
+        .progress-bar {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+        }
+        .progress-step {
+            flex: 1;
+            height: 4px;
+            background: var(--gray-200);
+            border-radius: 2px;
+            transition: background 0.3s;
+        }
+        .progress-step.active { background: var(--primary); }
+
+        @media (max-width: 600px) {
+            .grid-2 { grid-template-columns: 1fr; }
+            .form-container { padding: 12px; }
+            .form-page { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <div class="form-header">
+            <h1>Pre-Installation Assessment</h1>
+            <p>Please complete this form to confirm your installation site is ready.</p>
+        </div>
+
+        <div class="progress-bar" id="progressBar"></div>
+
+        <!-- Page 1: Customer & Site Info -->
+        <div class="form-page" data-owl-page="1" id="page-1">
+            <h2>Site Information</h2>
+            <div class="field-group">
+                <label for="submitter_name">Your Name</label>
+                <input type="text" id="submitter_name" name="submitter_name" data-owl-field="submitter_name" placeholder="Full name">
+            </div>
+            <div class="field-group">
+                <label for="submitter_email">Email</label>
+                <input type="email" id="submitter_email" name="submitter_email" data-owl-field="submitter_email" placeholder="email@example.com">
+            </div>
+            <div class="field-group">
+                <label for="site_address">Installation Site Address</label>
+                <textarea id="site_address" name="site_address" data-owl-field="site_address" placeholder="Full address including postcode"></textarea>
+            </div>
+            <div class="field-group">
+                <label for="site_contact_phone">Site Contact Phone</label>
+                <input type="tel" id="site_contact_phone" name="site_contact_phone" data-owl-field="site_contact_phone" placeholder="+44...">
+            </div>
+            <div class="nav-buttons">
+                <button class="btn-nav primary" onclick="navigateTo(2)">Next &rarr;</button>
+            </div>
+        </div>
+
+        <!-- Page 2: Product Assessments (dynamic) -->
+        <div class="form-page hidden" data-owl-page="2" id="page-2">
+            <h2>Product Assessments</h2>
+            <p style="margin-bottom: 16px; color: var(--gray-700);">
+                Complete the assessment for each product in your order.
+            </p>
+            <div id="product-sections"></div>
+            <div class="nav-buttons">
+                <button class="btn-nav" onclick="navigateTo(1)">&larr; Back</button>
+                <button class="btn-nav primary" onclick="navigateTo(3)">Next &rarr;</button>
+            </div>
+        </div>
+
+        <!-- Page 3: General Notes & Submit -->
+        <div class="form-page hidden" data-owl-page="3" id="page-3">
+            <h2>General Notes & Submission</h2>
+            <div class="field-group">
+                <label for="general_notes">Additional Notes or Concerns</label>
+                <textarea id="general_notes" name="general_notes" data-owl-field="general_notes"
+                    placeholder="Any additional information about the site, access requirements, scheduling preferences..."></textarea>
+            </div>
+            <div class="field-group">
+                <label for="preferred_date">Preferred Installation Date</label>
+                <input type="date" id="preferred_date" name="preferred_date" data-owl-field="preferred_date">
+            </div>
+            <div class="nav-buttons">
+                <button class="btn-nav" onclick="navigateTo(2)">&larr; Back</button>
+            </div>
+            <div style="margin-top: 24px;">
+                <button class="btn-submit" id="submitBtn" onclick="submitPIA()">Submit Assessment</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="owl-sdk.js"></script>
+    <script>
+        let currentPage = 1;
+        const totalPages = 3;
+        let productData = [];
+
+        function initProgressBar() {
+            const bar = document.getElementById('progressBar');
+            bar.innerHTML = '';
+            for (let i = 1; i <= totalPages; i++) {
+                const step = document.createElement('div');
+                step.className = 'progress-step' + (i <= currentPage ? ' active' : '');
+                bar.appendChild(step);
+            }
+        }
+
+        function navigateTo(page) {
+            document.querySelectorAll('[data-owl-page]').forEach(p => p.classList.add('hidden'));
+            document.getElementById('page-' + page).classList.remove('hidden');
+            currentPage = page;
+            initProgressBar();
+            window.scrollTo(0, 0);
+        }
+
+        function renderProductSections(items) {
+            const container = document.getElementById('product-sections');
+            container.innerHTML = '';
+
+            if (!items || items.length === 0) {
+                container.innerHTML = '<p style="color: var(--gray-700);">No products found for this opportunity.</p>';
+                return;
+            }
+
+            productData = items;
+
+            items.forEach((item, idx) => {
+                const section = document.createElement('div');
+                section.className = 'product-section';
+                section.setAttribute('data-product-index', idx);
+
+                const productName = item.Name || item.Product2?.Name || item.productName || 'Product ' + (idx + 1);
+                const productFamily = item.Product2?.Family || item.productFamily || '';
+
+                section.innerHTML = `
+                    <h3>${productName} ${productFamily ? '<span class="product-badge">' + productFamily + '</span>' : ''}</h3>
+                    <input type="hidden" name="li_${idx}_oliId" value="${item.Id || item.oliId || ''}">
+                    <input type="hidden" name="li_${idx}_productName" value="${productName}">
+                    <input type="hidden" name="li_${idx}_productFamily" value="${productFamily}">
+                    <div class="grid-2">
+                        <div class="field-group">
+                            <label>Location Suitable?</label>
+                            <select name="li_${idx}_locationSuitable">
+                                <option value="">-- Select --</option>
+                                <option value="Yes">Yes</option>
+                                <option value="No">No</option>
+                                <option value="Needs_Work">Needs Work</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label>Space Dimensions</label>
+                            <input type="text" name="li_${idx}_spaceDimensions" placeholder="e.g. 2m x 1.5m">
+                        </div>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="power_${idx}" name="li_${idx}_powerAvailable">
+                        <label for="power_${idx}">Power supply available</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="water_${idx}" name="li_${idx}_waterSupply">
+                        <label for="water_${idx}">Water supply available</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="drain_${idx}" name="li_${idx}_drainage">
+                        <label for="drain_${idx}">Drainage available</label>
+                    </div>
+                    <div class="field-group">
+                        <label>Assessment Result</label>
+                        <select name="li_${idx}_assessmentResult">
+                            <option value="">-- Select --</option>
+                            <option value="Pass">Pass - Ready for installation</option>
+                            <option value="Conditional">Conditional - Work needed first</option>
+                            <option value="Fail">Fail - Cannot install here</option>
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label>Notes for this product</label>
+                        <textarea name="li_${idx}_notes" placeholder="Any issues, observations, or requirements..."></textarea>
+                    </div>
+                `;
+                container.appendChild(section);
+            });
+        }
+
+        function collectLineItemData() {
+            const lineItems = [];
+            const sections = document.querySelectorAll('.product-section');
+
+            sections.forEach((section, idx) => {
+                const get = (name) => {
+                    const el = section.querySelector(`[name="li_${idx}_${name}"]`);
+                    if (!el) return '';
+                    if (el.type === 'checkbox') return el.checked;
+                    return el.value;
+                };
+
+                lineItems.push({
+                    oliId: get('oliId'),
+                    productName: get('productName'),
+                    productFamily: get('productFamily'),
+                    locationSuitable: get('locationSuitable'),
+                    powerAvailable: get('powerAvailable'),
+                    waterSupply: get('waterSupply'),
+                    drainage: get('drainage'),
+                    spaceDimensions: get('spaceDimensions'),
+                    notes: get('notes'),
+                    assessmentResult: get('assessmentResult')
+                });
+            });
+
+            return lineItems;
+        }
+
+        async function submitPIA() {
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = 'Submitting...';
+
+            try {
+                const lineItems = collectLineItemData();
+                OwlForms.setFieldData('line_items', lineItems);
+
+                await OwlForms.submit();
+            } catch (err) {
+                console.error('Submission failed:', err);
+                btn.disabled = false;
+                btn.textContent = 'Submit Assessment';
+            }
+        }
+
+        async function initForm() {
+            initProgressBar();
+
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const token = params.get('token');
+                const baseUrl = document.querySelector('meta[name="owl-base-url"]')?.content
+                    || localStorage.getItem('owl_base_url') || '';
+
+                if (!token || !baseUrl) {
+                    console.warn('OWL SDK: No token or base URL found. Form will run in standalone mode.');
+                    renderProductSections([]);
+                    return;
+                }
+
+                await OwlForms.init({ baseUrl, token, debug: true });
+
+                const prefill = OwlForms.getPrefillData();
+                if (prefill) {
+                    OwlForms.applyPrefill();
+
+                    const oliCollection = prefill.opportunity_line_items || prefill.lineItems || [];
+                    renderProductSections(oliCollection);
+                } else {
+                    renderProductSections([]);
+                }
+            } catch (err) {
+                console.error('Form init failed:', err);
+                renderProductSections([]);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initForm);
+    </script>
+</body>
+</html>
