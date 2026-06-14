@@ -882,6 +882,7 @@
         let lastHighlighted = null;
         let currentElement = null;
         let hoverEl = null;
+        const taggedElements = []; // Direct references to tagged elements + their labels
 
         // Create a fixed overlay container for tag labels
         const labelOverlay = document.createElement('div');
@@ -890,51 +891,52 @@
         document.body.appendChild(labelOverlay);
 
         function repositionLabels() {
-            const labels = labelOverlay.querySelectorAll('.owl-tag-label');
-            labels.forEach(lbl => {
-                const targetEl = document.querySelector(lbl.dataset.selector);
-                if (targetEl) {
-                    const rect = targetEl.getBoundingClientRect();
-                    lbl.style.top = (rect.top - 14) + 'px';
-                    lbl.style.left = rect.left + 'px';
-                }
+            taggedElements.forEach(item => {
+                const rect = item.el.getBoundingClientRect();
+                item.label.style.top = (rect.top - 14) + 'px';
+                item.label.style.left = rect.left + 'px';
             });
         }
         window.addEventListener('scroll', repositionLabels, true);
         window.addEventListener('resize', repositionLabels);
 
-        // Hover highlight
+        // Hover highlight — never touch tagged elements
         document.addEventListener('mouseover', (e) => {
             if (state.mode !== 'tag') return;
             const t = e.target;
             if (t.closest('#owl-mapper-toolbar') || t.closest('#owl-tag-popup') || t.closest('#owl-label-overlay')) return;
             if (t === document.body || t === document.documentElement) return;
-            if (hoverEl && hoverEl !== lastHighlighted) hoverEl.style.outline = '';
+            if (t.getAttribute('data-owl-tagged')) return; // Don't hover-highlight tagged elements
+            if (hoverEl && hoverEl !== lastHighlighted && !hoverEl.getAttribute('data-owl-tagged')) {
+                hoverEl.style.outline = '';
+            }
             if (t !== lastHighlighted) {
                 t.style.outline = '2px dashed #2196f3';
                 hoverEl = t;
             }
         }, true);
         document.addEventListener('mouseout', (e) => {
-            if (hoverEl && hoverEl !== lastHighlighted) {
+            if (hoverEl && hoverEl !== lastHighlighted && !hoverEl.getAttribute('data-owl-tagged')) {
                 hoverEl.style.outline = '';
                 hoverEl = null;
             }
         }, true);
 
         function addTagLabel(el, key) {
-            const selector = buildCssSelector(el);
-            // Remove existing label for this element
-            const existing = labelOverlay.querySelector(`[data-selector="${CSS.escape(selector)}"]`);
-            if (existing) existing.remove();
+            // Remove existing label for this element if re-tagging
+            const existingIdx = taggedElements.findIndex(item => item.el === el);
+            if (existingIdx > -1) {
+                taggedElements[existingIdx].label.remove();
+                taggedElements.splice(existingIdx, 1);
+            }
 
             const rect = el.getBoundingClientRect();
             const label = document.createElement('span');
             label.className = 'owl-tag-label';
             label.textContent = key;
-            label.dataset.selector = selector;
             label.style.cssText = `position:fixed;top:${rect.top - 14}px;left:${rect.left}px;background:#4caf50;color:#fff;font-size:10px;padding:2px 6px;border-radius:3px;font-family:monospace;pointer-events:none;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,0.3);`;
             labelOverlay.appendChild(label);
+            taggedElements.push({ el, label });
         }
 
         function selectElement(el) {
@@ -969,10 +971,8 @@
             e.preventDefault();
             e.stopPropagation();
 
-            // Use e.target directly — it gives the deepest element that received the event
             let target = e.target;
 
-            // If somehow we got body/html, try elementsFromPoint as fallback
             if (target === document.body || target === document.documentElement) {
                 const elements = document.elementsFromPoint(e.clientX, e.clientY);
                 for (const el of elements) {
@@ -983,7 +983,6 @@
                 }
             }
 
-            // Final guard: never select body
             if (target === document.body || target === document.documentElement) return;
 
             selectElement(target);
