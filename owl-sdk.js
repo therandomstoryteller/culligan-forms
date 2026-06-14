@@ -883,14 +883,36 @@
         let currentElement = null;
         let hoverEl = null;
 
-        // Hover highlight: show which element will be selected on click
+        // Create a fixed overlay container for tag labels
+        const labelOverlay = document.createElement('div');
+        labelOverlay.id = 'owl-label-overlay';
+        labelOverlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:99990;';
+        document.body.appendChild(labelOverlay);
+
+        function repositionLabels() {
+            const labels = labelOverlay.querySelectorAll('.owl-tag-label');
+            labels.forEach(lbl => {
+                const targetEl = document.querySelector(lbl.dataset.selector);
+                if (targetEl) {
+                    const rect = targetEl.getBoundingClientRect();
+                    lbl.style.top = (rect.top - 14) + 'px';
+                    lbl.style.left = rect.left + 'px';
+                }
+            });
+        }
+        window.addEventListener('scroll', repositionLabels, true);
+        window.addEventListener('resize', repositionLabels);
+
+        // Hover highlight
         document.addEventListener('mouseover', (e) => {
             if (state.mode !== 'tag') return;
-            if (e.target.closest('#owl-mapper-toolbar') || e.target.closest('#owl-tag-popup') || e.target.closest('.owl-tag-label')) return;
+            const t = e.target;
+            if (t.closest('#owl-mapper-toolbar') || t.closest('#owl-tag-popup') || t.closest('#owl-label-overlay')) return;
+            if (t === document.body || t === document.documentElement) return;
             if (hoverEl && hoverEl !== lastHighlighted) hoverEl.style.outline = '';
-            if (e.target !== lastHighlighted) {
-                e.target.style.outline = '2px dashed #2196f3';
-                hoverEl = e.target;
+            if (t !== lastHighlighted) {
+                t.style.outline = '2px dashed #2196f3';
+                hoverEl = t;
             }
         }, true);
         document.addEventListener('mouseout', (e) => {
@@ -901,15 +923,18 @@
         }, true);
 
         function addTagLabel(el, key) {
-            // Remove existing label if any
-            const existing = el.querySelector('.owl-tag-label');
+            const selector = buildCssSelector(el);
+            // Remove existing label for this element
+            const existing = labelOverlay.querySelector(`[data-selector="${CSS.escape(selector)}"]`);
             if (existing) existing.remove();
+
+            const rect = el.getBoundingClientRect();
             const label = document.createElement('span');
             label.className = 'owl-tag-label';
             label.textContent = key;
-            label.style.cssText = 'position:absolute;top:-10px;left:4px;background:#4caf50;color:#fff;font-size:10px;padding:2px 6px;border-radius:3px;z-index:9999;font-family:monospace;pointer-events:none;white-space:nowrap;';
-            el.style.position = el.style.position || 'relative';
-            el.appendChild(label);
+            label.dataset.selector = selector;
+            label.style.cssText = `position:fixed;top:${rect.top - 14}px;left:${rect.left}px;background:#4caf50;color:#fff;font-size:10px;padding:2px 6px;border-radius:3px;font-family:monospace;pointer-events:none;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,0.3);`;
+            labelOverlay.appendChild(label);
         }
 
         function selectElement(el) {
@@ -921,7 +946,7 @@
             currentElement = el;
             showTagPopup(el, taggedFields, {
                 onParent: () => {
-                    if (el.parentElement && el.parentElement !== document.body) {
+                    if (el.parentElement && el.parentElement !== document.body && el.parentElement !== document.documentElement) {
                         selectElement(el.parentElement);
                     }
                 },
@@ -937,22 +962,29 @@
         }
 
         document.addEventListener('click', (e) => {
-            if (e.target.closest('#owl-mapper-toolbar') || e.target.closest('#owl-tag-popup') || e.target.closest('.owl-tag-label')) return;
+            if (e.target.closest('#owl-mapper-toolbar') || e.target.closest('#owl-tag-popup') || e.target.closest('#owl-label-overlay')) return;
 
             if (state.mode === 'navigate') return;
 
             e.preventDefault();
             e.stopPropagation();
 
-            // Get the deepest element at the exact click coordinates
-            const elements = document.elementsFromPoint(e.clientX, e.clientY);
+            // Use e.target directly — it gives the deepest element that received the event
             let target = e.target;
-            for (const el of elements) {
-                if (el.closest('#owl-mapper-toolbar') || el.closest('#owl-tag-popup') || el.closest('.owl-tag-label')) continue;
-                if (el === document.body || el === document.documentElement) continue;
-                target = el;
-                break;
+
+            // If somehow we got body/html, try elementsFromPoint as fallback
+            if (target === document.body || target === document.documentElement) {
+                const elements = document.elementsFromPoint(e.clientX, e.clientY);
+                for (const el of elements) {
+                    if (el.closest('#owl-mapper-toolbar') || el.closest('#owl-tag-popup') || el.closest('#owl-label-overlay')) continue;
+                    if (el === document.body || el === document.documentElement) continue;
+                    target = el;
+                    break;
+                }
             }
+
+            // Final guard: never select body
+            if (target === document.body || target === document.documentElement) return;
 
             selectElement(target);
         }, true);
