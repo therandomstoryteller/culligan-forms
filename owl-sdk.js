@@ -823,11 +823,12 @@
     function initMapperMode() {
         log('Initializing MAPPER mode');
         const taggedFields = [];
-        injectMapperToolbar(taggedFields);
-        enableClickToTag(taggedFields);
+        const state = { mode: 'tag' }; // 'tag' or 'navigate'
+        injectMapperToolbar(taggedFields, state);
+        enableClickToTag(taggedFields, state);
     }
 
-    function injectMapperToolbar(taggedFields) {
+    function injectMapperToolbar(taggedFields, state) {
         const toolbar = document.createElement('div');
         toolbar.id = 'owl-mapper-toolbar';
         toolbar.innerHTML = `
@@ -840,6 +841,10 @@
                     </div>
                 </div>
                 <div style="display:flex;align-items:center;gap:10px;">
+                    <div id="owl-mode-toggle" style="display:flex;border-radius:6px;overflow:hidden;border:1px solid rgba(255,255,255,0.3);">
+                        <button id="owl-mode-tag" style="padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:#1976d2;color:#fff;">&#127919; Tag</button>
+                        <button id="owl-mode-nav" style="padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);">&#9654; Navigate</button>
+                    </div>
                     <span id="owl-mapper-count" style="font-size:13px;opacity:0.8;">0 fields tagged</span>
                     <button id="owl-save-mappings-btn" style="padding:8px 20px;background:#1976d2;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">Save to Salesforce</button>
                     <button id="owl-done-mapper-btn" style="padding:8px 20px;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:6px;font-size:14px;cursor:pointer;">Done</button>
@@ -851,13 +856,36 @@
 
         document.getElementById('owl-save-mappings-btn').addEventListener('click', () => saveMappingsToSF(taggedFields));
         document.getElementById('owl-done-mapper-btn').addEventListener('click', () => window.close());
+
+        document.getElementById('owl-mode-tag').addEventListener('click', () => {
+            state.mode = 'tag';
+            document.getElementById('owl-mode-tag').style.background = '#1976d2';
+            document.getElementById('owl-mode-tag').style.color = '#fff';
+            document.getElementById('owl-mode-nav').style.background = 'rgba(255,255,255,0.1)';
+            document.getElementById('owl-mode-nav').style.color = 'rgba(255,255,255,0.7)';
+            document.body.style.cursor = 'crosshair';
+        });
+
+        document.getElementById('owl-mode-nav').addEventListener('click', () => {
+            state.mode = 'navigate';
+            document.getElementById('owl-mode-nav').style.background = '#4caf50';
+            document.getElementById('owl-mode-nav').style.color = '#fff';
+            document.getElementById('owl-mode-tag').style.background = 'rgba(255,255,255,0.1)';
+            document.getElementById('owl-mode-tag').style.color = 'rgba(255,255,255,0.7)';
+            document.body.style.cursor = '';
+        });
+
+        document.body.style.cursor = 'crosshair';
     }
 
-    function enableClickToTag(taggedFields) {
+    function enableClickToTag(taggedFields, state) {
         let lastHighlighted = null;
 
         document.addEventListener('click', (e) => {
             if (e.target.closest('#owl-mapper-toolbar') || e.target.closest('#owl-tag-popup')) return;
+
+            if (state.mode === 'navigate') return;
+
             e.preventDefault();
             e.stopPropagation();
 
