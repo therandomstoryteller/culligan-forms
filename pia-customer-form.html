@@ -683,11 +683,35 @@
       installDate: '15 July 2026'
     };
 
-    const quoteProducts = [
+    // Default demo data (used when SDK prefill is not available)
+    const defaultProducts = [
       { id:'d1', name:'C7 Firewall®', type:'Freestanding', location:'Kitchen area, 2nd Floor', features:['Hot','Cold','Ambient','Sparkling'] },
       { id:'d2', name:'C100', type:'Desktop', location:'Reception', features:['Hot','Cold'] },
       { id:'d3', name:'Instanta 5L', type:'Boiler', location:'Staff Kitchen', features:['Hot'] }
     ];
+
+    // SDK integration: read prefill data if provided by OWL SDK
+    let quoteProducts = defaultProducts;
+    window._owlFormReady = function(prefillData) {
+      if (prefillData && prefillData.dispensers && prefillData.dispensers.length > 0) {
+        quoteProducts = prefillData.dispensers;
+      }
+      if (prefillData && prefillData.site_address) {
+        document.getElementById('rv_address').textContent = prefillData.site_address;
+      }
+      if (prefillData && prefillData.site_postcode) {
+        document.getElementById('rv_postcode').textContent = prefillData.site_postcode;
+      }
+      if (prefillData && prefillData.site_contact) {
+        document.getElementById('rv_contact').textContent = prefillData.site_contact;
+      }
+      if (prefillData && prefillData.earliest_install_date) {
+        document.getElementById('rv_date').textContent = prefillData.earliest_install_date;
+      }
+      // Re-render with the new data
+      renderReviewDispensers();
+      renderAccordions();
+    };
 
     // ── STATE ─────────────────────────────────────────────────────────────────
     let currentPage = 0;
@@ -1214,5 +1238,23 @@
     });
   </script>
   <script src="owl-sdk.js"></script>
+  <script>
+    // OWL SDK integration: when the SDK loads form config, pass prefill data to the form
+    document.addEventListener('DOMContentLoaded', function() {
+      if (window.OwlForms && window.OwlForms.getMode() === 'live') {
+        var params = new URLSearchParams(window.location.search);
+        var token = params.get('token');
+        var baseUrl = document.querySelector('meta[name="owl-base-url"]') 
+          ? document.querySelector('meta[name="owl-base-url"]').content 
+          : (localStorage.getItem('owl_base_url') || '');
+        if (token && baseUrl) {
+          window.OwlForms.init({ baseUrl: baseUrl, token: token }).then(function() {
+            var data = window.OwlForms.getPrefillData();
+            if (data && window._owlFormReady) window._owlFormReady(data);
+          });
+        }
+      }
+    });
+  </script>
 </body>
 </html>
