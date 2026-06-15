@@ -1138,49 +1138,60 @@
     }
 
     // ── SUBMIT ───────────────────────────────────────────────────────────────
-    function submitAssessment() {
+    async function submitAssessment() {
       if (!validateDeclaration()) return;
 
       const formData = {
         referenceNumber: 'REF-2026-' + Math.floor(1000 + Math.random() * 9000),
         submittedAt: new Date().toISOString(),
-        site: siteData,
-        dispensers: quoteProducts.map(p => {
-          const isCountertop = p.type === 'Desktop' || p.type === 'Boiler';
-          return {
-            id: p.id, model: p.name, type: p.type, location: p.location, features: p.features,
-            checks: {
-              installType: getRadio(p.id + '_install'),
-              photoNew: document.getElementById(p.id + '_file_new')?.files[0]?.name || null,
-              photoExisting: document.getElementById(p.id + '_file_existing')?.files[0]?.name || null,
-              spaceSuitable: getRadio(p.id + '_space'),
-              filterLocation: p.type === 'Boiler' ? getRadio(p.id + '_filter_location') : undefined,
-              socketDistance: getRadio(p.id + '_socket_distance'),
-              socketWorking: getRadio(p.id + '_socket_working'),
-              waterDistance: getRadio(p.id + '_water_distance'),
-              waterPressure: getRadio(p.id + '_water_pressure'),
-              shutoffValve: getRadio(p.id + '_shutoff_valve'),
-              flowRate: getRadio(p.id + '_flow_rate'),
-              countertopAvailable: isCountertop ? getRadio(p.id + '_countertop_available') : undefined,
-              dimensionsFit: isCountertop ? getRadio(p.id + '_dimensions_fit') : undefined,
-              surfaceMaterial: isCountertop ? getRadio(p.id + '_surface') : undefined,
-              materialOther: isCountertop ? document.getElementById(p.id + '_material_other')?.value : undefined,
-              drillingAccept: isCountertop ? getRadio(p.id + '_drilling') : undefined,
-            }
-          };
-        }),
-        additionalNotes: document.getElementById('additionalNotes').value,
-        deliveryAcknowledged: document.getElementById('deliveryAck').checked,
-        readiness: getRadio('readiness'),
-        fullName: document.getElementById('fullName').value.trim(),
-        additionalComments: document.getElementById('additionalComments').value,
-        legalAgreed: document.getElementById('legalAgree').checked
+        site_address: document.getElementById('rv_address')?.textContent || '',
+        site_postcode: document.getElementById('rv_postcode')?.textContent || '',
+        site_contact: document.getElementById('rv_contact')?.textContent || '',
+        additional_notes: document.getElementById('additionalNotes')?.value || '',
+        signoff_name: document.getElementById('fullName').value.trim(),
+        readiness_status: getRadio('readiness'),
+        legal_agreed: document.getElementById('legalAgree').checked,
+        dispenserResults: quoteProducts.map(p => ({
+          oliId: p.oliId || '',
+          name: p.name,
+          type: p.type,
+          location: p.location || '',
+          location_suitable: getRadio(p.id + '_space'),
+          socket_distance: getRadio(p.id + '_socket_distance'),
+          socket_working: getRadio(p.id + '_socket_working'),
+          water_distance: getRadio(p.id + '_water_distance'),
+          water_pressure: getRadio(p.id + '_water_pressure'),
+          shutoff_valve: getRadio(p.id + '_shutoff_valve'),
+          flow_rate: getRadio(p.id + '_flow_rate'),
+          install_type: getRadio(p.id + '_install'),
+          notes: document.getElementById(p.id + '_notes')?.value || ''
+        }))
       };
 
-      document.getElementById('refNumber').textContent = formData.referenceNumber;
-      console.log('PIA Submission:', JSON.stringify(formData, null, 2));
+      // If SDK is initialized (live mode), submit to Salesforce
+      if (window.OwlForms && window.OwlForms.isInitialized()) {
+        try {
+          // Set all form data keys via SDK
+          Object.keys(formData).forEach(key => {
+            window.OwlForms.setFieldData(key, formData[key]);
+          });
+          document.getElementById('refNumber').textContent = 'Submitting...';
+          goTo(5);
+          const result = await window.OwlForms.submit({ showLoading: false });
+          document.getElementById('refNumber').textContent = formData.referenceNumber;
+          console.log('Submission result:', result);
+        } catch (e) {
+          console.error('Submission failed:', e);
+          document.getElementById('refNumber').textContent = 'Submission failed - ' + (e.message || 'Unknown error');
+        }
+      } else {
+        // Demo mode - just log and show success
+        document.getElementById('refNumber').textContent = formData.referenceNumber;
+        console.log('PIA Submission (demo):', JSON.stringify(formData, null, 2));
+        goTo(5);
+      }
+
       try { localStorage.removeItem('pia_draft'); } catch(e) {}
-      goTo(5);
     }
 
     // ── DRAFT PERSISTENCE ─────────────────────────────────────────────────────
