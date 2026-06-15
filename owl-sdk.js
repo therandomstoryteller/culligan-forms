@@ -274,18 +274,119 @@
         });
     }
 
+    function getFormPageScope() {
+        return document.getElementById('owl-form-container')
+            || document.getElementById('main-content')
+            || document.querySelector('main.form-body, main, .form-body');
+    }
+
+    function getFormPages() {
+        const markedPages = Array.from(document.querySelectorAll('[data-owl-page]'));
+        if (markedPages.length > 1) return markedPages;
+
+        const scope = getFormPageScope();
+        if (scope) {
+            const conventionPages = Array.from(
+                scope.querySelectorAll(':scope > .page, :scope > section.page, :scope > [data-page]')
+            );
+            if (conventionPages.length > 1) return conventionPages;
+        }
+
+        return markedPages;
+    }
+
+    function getPdfCapturePages() {
+        return getFormPages().filter(page => !page.hasAttribute('data-owl-pdf-exclude'));
+    }
+
+    function copyFormValuesToClone(source, clone) {
+        source.querySelectorAll('input, textarea, select').forEach(srcField => {
+            let cloneField = null;
+
+            if (srcField.id) {
+                cloneField = clone.querySelector('#' + CSS.escape(srcField.id));
+            }
+
+            if (!cloneField && srcField.name) {
+                const srcNamed = source.querySelectorAll(`[name="${CSS.escape(srcField.name)}"]`);
+                const cloneNamed = clone.querySelectorAll(`[name="${CSS.escape(srcField.name)}"]`);
+                const idx = Array.from(srcNamed).indexOf(srcField);
+                if (idx >= 0 && cloneNamed[idx]) cloneField = cloneNamed[idx];
+            }
+
+            if (!cloneField) return;
+
+            if (srcField.type === 'checkbox' || srcField.type === 'radio') {
+                cloneField.checked = srcField.checked;
+            } else if (srcField.tagName === 'SELECT') {
+                cloneField.value = srcField.value;
+            } else {
+                cloneField.value = srcField.value;
+            }
+        });
+
+        source.querySelectorAll('[id]').forEach(srcEl => {
+            if (['INPUT', 'TEXTAREA', 'SELECT'].includes(srcEl.tagName)) return;
+            const cloneEl = clone.querySelector('#' + CSS.escape(srcEl.id));
+            if (cloneEl && cloneEl.innerHTML !== srcEl.innerHTML) {
+                cloneEl.innerHTML = srcEl.innerHTML;
+            }
+        });
+    }
+
+    function preparePdfClone(clone) {
+        clone.classList.add('active');
+        clone.style.display = 'block';
+        clone.style.opacity = '1';
+        clone.style.visibility = 'visible';
+
+        clone.querySelectorAll('.accordion').forEach(acc => {
+            acc.classList.add('open');
+            const body = acc.querySelector('.accordion-body');
+            if (body) body.style.display = 'block';
+        });
+
+        clone.querySelectorAll('.error-box').forEach(el => el.classList.remove('show'));
+        clone.querySelectorAll('.btn-row, .progress-track, .form-header, .form-footer').forEach(el => {
+            el.style.display = 'none';
+        });
+    }
+
+    function createPdfCaptureWrapper(pages) {
+        const wrapper = document.createElement('div');
+        wrapper.setAttribute('data-owl-pdf-wrapper', '');
+        wrapper.style.cssText = [
+            'position:absolute',
+            'left:-10000px',
+            'top:0',
+            'width:640px',
+            'background:#fff',
+            'pointer-events:none'
+        ].join(';');
+
+        pages.forEach(page => {
+            const clone = page.cloneNode(true);
+            copyFormValuesToClone(page, clone);
+            preparePdfClone(clone);
+            clone.style.pageBreakAfter = 'always';
+            wrapper.appendChild(clone);
+        });
+
+        return wrapper;
+    }
+
     async function captureFormPdf() {
         log('Capturing form as PDF...');
         const loaded = await loadPdfLibrary();
         if (!loaded) return null;
 
-        const pages = document.querySelectorAll('[data-owl-page]');
+        const pages = getPdfCapturePages();
 
         if (pages.length > 1) {
             return await captureMultiPagePdf(pages);
         }
 
-        const container = document.getElementById('owl-form-container') || document.body;
+        const container = getFormPageScope() || document.body;
         const opt = {
             margin: 10,
             filename: 'form-submission.pdf',
@@ -295,12 +396,34 @@
             pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
         };
 
+        const hiddenPages = container.querySelectorAll
+            ? Array.from(container.querySelectorAll('.page:not(.active), [data-owl-page][style*="display: none"]'))
+            : [];
+        const restored = hiddenPages.map(page => ({
+            page,
+            display: page.style.display,
+            opacity: page.style.opacity,
+            active: page.classList.contains('active')
+        }));
+
+        hiddenPages.forEach(page => {
+            page.style.display = 'block';
+            page.style.opacity = '1';
+            page.classList.add('active');
+        });
+
         try {
             const pdfBlob = await html2pdf().set(opt).from(container).outputPdf('blob');
             return await blobToBase64(pdfBlob);
         } catch (err) {
             error('PDF capture failed:', err);
             return null;
+        } finally {
+            restored.forEach(({ page, display, opacity, active }) => {
+                page.style.display = display;
+                page.style.opacity = opacity;
+                if (!active) page.classList.remove('active');
+            });
         }
     }
 
@@ -312,24 +435,11 @@
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        const originalDisplay = [];
-        pages.forEach((page, i) => {
-            originalDisplay[i] = page.style.display;
-        });
-
-        pages.forEach(page => { page.style.display = 'block'; });
-
-        const wrapper = document.createElement('div');
-        pages.forEach(page => {
-            const clone = page.cloneNode(true);
-            clone.style.display = 'block';
-            clone.style.pageBreakAfter = 'always';
-            wrapper.appendChild(clone);
-        });
-
+        const wrapper = createPdfCaptureWrapper(pages);
         document.body.appendChild(wrapper);
 
         try {
+            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
             const pdfBlob = await html2pdf().set(opt).from(wrapper).outputPdf('blob');
             return await blobToBase64(pdfBlob);
         } catch (err) {
@@ -337,7 +447,6 @@
             return null;
         } finally {
             wrapper.remove();
-            pages.forEach((page, i) => { page.style.display = originalDisplay[i]; });
         }
     }
 
