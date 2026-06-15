@@ -1190,10 +1190,15 @@
         goTo(5);
       }
 
-      try { localStorage.removeItem('pia_draft'); } catch(e) {}
+      try { localStorage.removeItem(getDraftKey()); } catch(e) {}
     }
 
     // ── DRAFT PERSISTENCE ─────────────────────────────────────────────────────
+    function getDraftKey() {
+      const token = new URLSearchParams(window.location.search).get('token');
+      return token ? `pia_draft_${token}` : 'pia_draft';
+    }
+
     function saveDraft() {
       const draft = {
         currentPage,
@@ -1206,17 +1211,18 @@
         additionalComments: document.getElementById('additionalComments')?.value || '',
         savedAt: new Date().toISOString()
       };
-      try { localStorage.setItem('pia_draft', JSON.stringify(draft)); } catch(e) {}
+      try { localStorage.setItem(getDraftKey(), JSON.stringify(draft)); } catch(e) {}
     }
 
     function loadDraft() {
       try {
-        const raw = localStorage.getItem('pia_draft');
+        const draftKey = getDraftKey();
+        const raw = localStorage.getItem(draftKey);
         if (!raw) return;
         const draft = JSON.parse(raw);
         if (!draft.savedAt) return;
         const ago = Date.now() - new Date(draft.savedAt).getTime();
-        if (ago > 24*60*60*1000) { localStorage.removeItem('pia_draft'); return; }
+        if (ago > 24*60*60*1000) { localStorage.removeItem(draftKey); return; }
 
         const banner = document.createElement('div');
         banner.className = 'info-banner';

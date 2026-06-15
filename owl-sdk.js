@@ -355,13 +355,16 @@
     function createPdfCaptureWrapper(pages) {
         const wrapper = document.createElement('div');
         wrapper.setAttribute('data-owl-pdf-wrapper', '');
+        // Keep wrapper in the viewport — html2canvas often renders blank pages for far off-screen elements.
         wrapper.style.cssText = [
-            'position:absolute',
-            'left:-10000px',
+            'position:fixed',
+            'left:0',
             'top:0',
             'width:640px',
             'background:#fff',
-            'pointer-events:none'
+            'pointer-events:none',
+            'z-index:-1',
+            'opacity:0'
         ].join(';');
 
         pages.forEach(page => {
