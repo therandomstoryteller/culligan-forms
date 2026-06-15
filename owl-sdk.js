@@ -1093,22 +1093,21 @@
         btn.disabled = true;
         btn.textContent = 'Saving...';
 
-        // Get baseUrl from: URL param > meta tag > localStorage
+        // Get baseUrl from: URL param > meta tag > localStorage (no prompt needed - Admin App passes it)
         let baseUrl = new URLSearchParams(window.location.search).get('owl_base_url')
             || document.querySelector('meta[name="owl-base-url"]')?.content
             || localStorage.getItem('owl_base_url')
             || '';
 
         if (!baseUrl) {
-            baseUrl = prompt('Enter your Salesforce Site URL to save mappings:\n(e.g. https://yourdomain.my.salesforce-sites.com)');
-            if (!baseUrl) {
-                btn.disabled = false;
-                btn.textContent = 'Save to Salesforce';
-                return;
-            }
-            baseUrl = baseUrl.replace(/\/+$/, '');
-            localStorage.setItem('owl_base_url', baseUrl);
+            alert('Unable to save: Salesforce Site URL not configured. Please launch the mapper from the Admin App.');
+            btn.disabled = false;
+            btn.textContent = 'Save to Salesforce';
+            return;
         }
+
+        baseUrl = decodeURIComponent(baseUrl).replace(/\/+$/, '');
+        localStorage.setItem('owl_base_url', baseUrl);
 
         const formId = new URLSearchParams(window.location.search).get('formId')
             || new URLSearchParams(window.location.search).get('token')
