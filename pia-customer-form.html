@@ -1244,9 +1244,11 @@
       if (window.OwlForms && window.OwlForms.getMode() === 'live') {
         var params = new URLSearchParams(window.location.search);
         var token = params.get('token');
-        var baseUrl = document.querySelector('meta[name="owl-base-url"]') 
-          ? document.querySelector('meta[name="owl-base-url"]').content 
-          : (localStorage.getItem('owl_base_url') || '');
+        var baseUrl = params.get('owl_base_url')
+          || (document.querySelector('meta[name="owl-base-url"]') 
+              ? document.querySelector('meta[name="owl-base-url"]').content : '')
+          || localStorage.getItem('owl_base_url') 
+          || '';
         if (token && baseUrl) {
           window.OwlForms.init({ baseUrl: baseUrl, token: token }).then(function() {
             var data = window.OwlForms.getPrefillData();
