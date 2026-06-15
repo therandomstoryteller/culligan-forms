@@ -353,19 +353,13 @@
     }
 
     function createPdfCaptureWrapper(pages) {
+        const outer = document.createElement('div');
+        outer.setAttribute('data-owl-pdf-outer', '');
+        outer.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;overflow:hidden;pointer-events:none;z-index:-1';
+
         const wrapper = document.createElement('div');
         wrapper.setAttribute('data-owl-pdf-wrapper', '');
-        // Keep wrapper in the viewport — html2canvas often renders blank pages for far off-screen elements.
-        wrapper.style.cssText = [
-            'position:fixed',
-            'left:0',
-            'top:0',
-            'width:640px',
-            'background:#fff',
-            'pointer-events:none',
-            'z-index:-1',
-            'opacity:0'
-        ].join(';');
+        wrapper.style.cssText = 'width:640px;background:#fff;opacity:1';
 
         pages.forEach(page => {
             const clone = page.cloneNode(true);
@@ -375,7 +369,8 @@
             wrapper.appendChild(clone);
         });
 
-        return wrapper;
+        outer.appendChild(wrapper);
+        return outer;
     }
 
     async function captureFormPdf() {
@@ -438,18 +433,23 @@
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        const wrapper = createPdfCaptureWrapper(pages);
-        document.body.appendChild(wrapper);
+        const outer = createPdfCaptureWrapper(pages);
+        document.body.appendChild(outer);
+        const wrapper = outer.querySelector('[data-owl-pdf-wrapper]');
 
         try {
             await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+            // Temporarily expand outer so html2canvas can measure the wrapper
+            outer.style.width = '640px';
+            outer.style.height = 'auto';
+            outer.style.overflow = 'visible';
             const pdfBlob = await html2pdf().set(opt).from(wrapper).outputPdf('blob');
             return await blobToBase64(pdfBlob);
         } catch (err) {
             error('Multi-page PDF capture failed:', err);
             return null;
         } finally {
-            wrapper.remove();
+            outer.remove();
         }
     }
 
