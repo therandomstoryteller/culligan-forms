@@ -16,7 +16,8 @@
 (function(global) {
     'use strict';
 
-    const VERSION = '1.0.0';
+    const VERSION = '1.0.2';
+    const PDF_CAPTURE_TIMEOUT_MS = 15000;
 
     let _config = {
         baseUrl: '',
@@ -263,6 +264,76 @@
 
     let _pdfLibLoaded = false;
 
+    function isMobileDevice() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+            || (navigator.maxTouchPoints > 1 && window.innerWidth <= 768);
+    }
+
+    function getPdfCanvasScale() {
+        return isMobileDevice() ? 1 : 2;
+    }
+
+    function withTimeout(promise, ms, label) {
+        return new Promise((resolve, reject) => {
+            const timer = setTimeout(() => {
+                reject(new OwlError(`${label || 'Operation'} timed out after ${Math.round(ms / 1000)}s`, 'TIMEOUT'));
+            }, ms);
+            promise.then(
+                (value) => { clearTimeout(timer); resolve(value); },
+                (err) => { clearTimeout(timer); reject(err); }
+            );
+        });
+    }
+
+    function getPdfCaptureOptions() {
+        return {
+            margin: 10,
+            image: { type: 'jpeg', quality: isMobileDevice() ? 0.75 : 0.85 },
+            html2canvas: { scale: getPdfCanvasScale(), useCORS: true, logging: false },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+    }
+
+    function getOffScreenPdfWrapperStyle() {
+        return 'position:fixed;left:-10000px;top:0;width:640px;height:0;overflow:hidden;' +
+            'visibility:hidden;opacity:0;pointer-events:none;z-index:-1;contain:strict;' +
+            'clip:rect(0,0,0,0);clip-path:inset(50%)';
+    }
+
+    async function mountPdfCaptureHost(contentNode) {
+        const outer = document.createElement('div');
+        outer.setAttribute('data-owl-pdf-outer', '');
+        outer.setAttribute('aria-hidden', 'true');
+        outer.style.cssText = getOffScreenPdfWrapperStyle();
+
+        const iframe = document.createElement('iframe');
+        iframe.setAttribute('data-owl-pdf-iframe', '');
+        iframe.setAttribute('tabindex', '-1');
+        iframe.setAttribute('aria-hidden', 'true');
+        iframe.style.cssText = 'position:absolute;left:0;top:0;width:640px;height:1px;border:0;opacity:0;visibility:hidden';
+
+        outer.appendChild(iframe);
+        document.body.appendChild(outer);
+
+        await new Promise((resolve) => {
+            iframe.onload = () => resolve();
+            iframe.src = 'about:blank';
+        });
+
+        const doc = iframe.contentDocument;
+        doc.open();
+        doc.write('<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;background:#fff"></body></html>');
+        doc.close();
+
+        Array.from(document.querySelectorAll('style, link[rel="stylesheet"]')).forEach((node) => {
+            doc.head.appendChild(node.cloneNode(true));
+        });
+
+        const host = doc.body;
+        host.appendChild(contentNode);
+        return { outer, iframe, host };
+    }
+
     async function loadPdfLibrary() {
         if (_pdfLibLoaded) return true;
         return new Promise((resolve, reject) => {
@@ -353,13 +424,9 @@
     }
 
     function createPdfCaptureWrapper(pages) {
-        const outer = document.createElement('div');
-        outer.setAttribute('data-owl-pdf-outer', '');
-        outer.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;overflow:hidden;pointer-events:none;z-index:-1';
-
         const wrapper = document.createElement('div');
         wrapper.setAttribute('data-owl-pdf-wrapper', '');
-        wrapper.style.cssText = 'width:640px;background:#fff;opacity:1';
+        wrapper.style.cssText = 'width:640px;background:#fff';
 
         pages.forEach(page => {
             const clone = page.cloneNode(true);
@@ -369,8 +436,7 @@
             wrapper.appendChild(clone);
         });
 
-        outer.appendChild(wrapper);
-        return outer;
+        return wrapper;
     }
 
     async function captureFormPdf() {
@@ -379,77 +445,64 @@
         if (!loaded) return null;
 
         const pages = getPdfCapturePages();
+        const capturePromise = pages.length > 1
+            ? captureMultiPagePdf(pages)
+            : captureSinglePagePdfClone(pages[0] || getFormPageScope() || document.body);
 
-        if (pages.length > 1) {
-            return await captureMultiPagePdf(pages);
+        try {
+            return await withTimeout(capturePromise, PDF_CAPTURE_TIMEOUT_MS, 'PDF capture');
+        } catch (err) {
+            if (err.code === 'TIMEOUT') {
+                log('PDF capture timed out, skipping PDF');
+            } else {
+                error('PDF capture failed:', err);
+            }
+            return null;
         }
+    }
 
-        const container = getFormPageScope() || document.body;
+    async function captureSinglePagePdfClone(source) {
+        if (!source) return null;
+
+        const clone = source.cloneNode(true);
+        copyFormValuesToClone(source, clone);
+        preparePdfClone(clone);
+
         const opt = {
-            margin: 10,
+            ...getPdfCaptureOptions(),
             filename: 'form-submission.pdf',
-            image: { type: 'jpeg', quality: 0.85 },
-            html2canvas: { scale: 2, useCORS: true, logging: false },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
             pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
         };
 
-        const hiddenPages = container.querySelectorAll
-            ? Array.from(container.querySelectorAll('.page:not(.active), [data-owl-page][style*="display: none"]'))
-            : [];
-        const restored = hiddenPages.map(page => ({
-            page,
-            display: page.style.display,
-            opacity: page.style.opacity,
-            active: page.classList.contains('active')
-        }));
-
-        hiddenPages.forEach(page => {
-            page.style.display = 'block';
-            page.style.opacity = '1';
-            page.classList.add('active');
-        });
-
+        let captureHost = null;
         try {
-            const pdfBlob = await html2pdf().set(opt).from(container).outputPdf('blob');
+            captureHost = await mountPdfCaptureHost(clone);
+            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+            const pdfBlob = await html2pdf().set(opt).from(clone).outputPdf('blob');
             return await blobToBase64(pdfBlob);
         } catch (err) {
-            error('PDF capture failed:', err);
+            error('Single-page PDF capture failed:', err);
             return null;
         } finally {
-            restored.forEach(({ page, display, opacity, active }) => {
-                page.style.display = display;
-                page.style.opacity = opacity;
-                if (!active) page.classList.remove('active');
-            });
+            if (captureHost && captureHost.outer) captureHost.outer.remove();
         }
     }
 
     async function captureMultiPagePdf(pages) {
-        const opt = {
-            margin: 10,
-            image: { type: 'jpeg', quality: 0.85 },
-            html2canvas: { scale: 2, useCORS: true, logging: false },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
+        const opt = getPdfCaptureOptions();
+        const wrapper = createPdfCaptureWrapper(pages);
 
-        const outer = createPdfCaptureWrapper(pages);
-        document.body.appendChild(outer);
-        const wrapper = outer.querySelector('[data-owl-pdf-wrapper]');
-
+        let captureHost = null;
         try {
+            captureHost = await mountPdfCaptureHost(wrapper);
             await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-            // Temporarily expand outer so html2canvas can measure the wrapper
-            outer.style.width = '640px';
-            outer.style.height = 'auto';
-            outer.style.overflow = 'visible';
             const pdfBlob = await html2pdf().set(opt).from(wrapper).outputPdf('blob');
             return await blobToBase64(pdfBlob);
         } catch (err) {
             error('Multi-page PDF capture failed:', err);
             return null;
         } finally {
-            outer.remove();
+            if (captureHost && captureHost.outer) captureHost.outer.remove();
         }
     }
 
@@ -583,16 +636,7 @@
             log('Submitting form data:', Object.keys(mergedData).length, 'fields');
 
             if (options.showLoading !== false) {
-                showSubmitting(true);
-            }
-
-            let pdfBase64 = null;
-            if (_formConfig.generatePdf) {
-                log('PDF capture enabled, generating...');
-                pdfBase64 = await captureFormPdf();
-                if (pdfBase64) {
-                    log('PDF captured, size:', Math.round(pdfBase64.length / 1024) + 'KB');
-                }
+                showSubmitting(true, 'Submitting your assessment...');
             }
 
             const result = await apiCall('submission', 'POST', {
@@ -601,18 +645,28 @@
                 isDraft: false
             });
 
-            showSubmitting(false);
-
             if (result.data.success) {
                 log('Submission successful:', result.data.submissionId);
 
-                if (pdfBase64) {
-                    try {
-                        await uploadSubmissionPdf(pdfBase64, result.data.submissionId);
-                    } catch (pdfErr) {
-                        error('PDF upload failed after successful submission:', pdfErr.message);
+                if (_formConfig.generatePdf) {
+                    if (options.showLoading !== false) {
+                        updateSubmittingMessage('Generating PDF...');
+                    }
+                    const pdfBase64 = await captureFormPdf();
+                    if (pdfBase64) {
+                        log('PDF captured, size:', Math.round(pdfBase64.length / 1024) + 'KB');
+                        try {
+                            if (options.showLoading !== false) {
+                                updateSubmittingMessage('Uploading PDF...');
+                            }
+                            await uploadSubmissionPdf(pdfBase64, result.data.submissionId);
+                        } catch (pdfErr) {
+                            error('PDF upload failed after successful submission:', pdfErr.message);
+                        }
                     }
                 }
+
+                showSubmitting(false);
 
                 if (_config.onSubmitSuccess) {
                     _config.onSubmitSuccess(result.data);
@@ -628,6 +682,7 @@
 
                 return result.data;
             } else {
+                showSubmitting(false);
                 const err = new OwlError(result.data.error || 'Submission failed', 'SUBMISSION_ERROR');
                 if (_config.onSubmitError) _config.onSubmitError(err, result.data);
                 showFormError(result.data.error || 'Submission failed. Please try again.');
@@ -794,26 +849,33 @@
         }
     }
 
-    function showSubmitting(show) {
+    function showSubmitting(show, message) {
         let overlay = document.getElementById('owl-submitting-overlay');
         if (show) {
             if (!overlay) {
                 overlay = document.createElement('div');
                 overlay.id = 'owl-submitting-overlay';
                 overlay.innerHTML = `
-                    <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.9);
+                    <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.95);
                         display:flex;align-items:center;justify-content:center;z-index:99999;flex-direction:column;">
                         <div style="width:40px;height:40px;border:4px solid #e0e0e0;border-top:4px solid #4caf50;
                             border-radius:50%;animation:owlSpin 1s linear infinite;"></div>
-                        <p style="margin-top:16px;color:#555;font-family:sans-serif;">Submitting...</p>
+                        <p id="owl-submitting-message" style="margin-top:16px;color:#555;font-family:sans-serif;text-align:center;padding:0 24px;"></p>
                     </div>
+                    <style>@keyframes owlSpin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}</style>
                 `;
                 document.body.appendChild(overlay);
             }
+            updateSubmittingMessage(message || 'Submitting...');
             overlay.style.display = '';
         } else if (overlay) {
             overlay.remove();
         }
+    }
+
+    function updateSubmittingMessage(message) {
+        const msgEl = document.getElementById('owl-submitting-message');
+        if (msgEl) msgEl.textContent = message;
     }
 
     function showSuccess(message) {
