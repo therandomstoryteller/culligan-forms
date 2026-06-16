@@ -1389,9 +1389,15 @@
             window.OwlForms.setFieldData(key, formData[key]);
           });
           const result = await window.OwlForms.submit({ showLoading: false });
-          document.getElementById('refNumber').textContent = formData.referenceNumber;
-          goTo(5);
-          console.log('Submission result:', result);
+          if (result && result.success) {
+            document.getElementById('refNumber').textContent = formData.referenceNumber;
+            goTo(5);
+            console.log('Submission result:', result);
+          } else {
+            const errMsg = (result && result.error) || 'Submission failed. Please try again.';
+            document.getElementById('refNumber').textContent = errMsg;
+            console.error('Submission failed:', result);
+          }
         } catch (e) {
           console.error('Submission failed:', e);
           document.getElementById('refNumber').textContent = 'Submission failed - ' + (e.message || 'Unknown error');

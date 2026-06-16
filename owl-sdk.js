@@ -545,6 +545,22 @@
         throw new OwlError(result.data.error || 'Photo upload failed.', 'UPLOAD_ERROR');
     }
 
+    async function uploadSubmissionPdf(base64Data, submissionId) {
+        const result = await apiCall('submission', 'POST', {
+            token: _config.token,
+            action: 'uploadPdf',
+            base64Data: base64Data,
+            submissionId: submissionId || null
+        });
+
+        if (result.data.success) {
+            log('PDF uploaded for submission:', submissionId);
+            return result.data;
+        }
+
+        throw new OwlError(result.data.error || 'PDF upload failed.', 'UPLOAD_ERROR');
+    }
+
     // --- Form Submission ---
 
     async function submit(options = {}) {
@@ -570,11 +586,11 @@
                 showSubmitting(true);
             }
 
+            let pdfBase64 = null;
             if (_formConfig.generatePdf) {
                 log('PDF capture enabled, generating...');
-                const pdfBase64 = await captureFormPdf();
+                pdfBase64 = await captureFormPdf();
                 if (pdfBase64) {
-                    mergedData._pdf = pdfBase64;
                     log('PDF captured, size:', Math.round(pdfBase64.length / 1024) + 'KB');
                 }
             }
@@ -589,6 +605,14 @@
 
             if (result.data.success) {
                 log('Submission successful:', result.data.submissionId);
+
+                if (pdfBase64) {
+                    try {
+                        await uploadSubmissionPdf(pdfBase64, result.data.submissionId);
+                    } catch (pdfErr) {
+                        error('PDF upload failed after successful submission:', pdfErr.message);
+                    }
+                }
 
                 if (_config.onSubmitSuccess) {
                     _config.onSubmitSuccess(result.data);
@@ -1362,6 +1386,7 @@
         captureFormPdf: captureFormPdf,
         uploadPhoto: uploadPhoto,
         compressImage: compressImage,
+        uploadSubmissionPdf: uploadSubmissionPdf,
 
         _internal: {
             findFieldElements: findFieldElements,
