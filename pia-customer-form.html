@@ -745,7 +745,9 @@
 
     // SDK integration: read prefill data if provided by OWL SDK
     let quoteProducts = defaultProducts;
+    window._owlPrefillData = null;
     window._owlFormReady = function(prefillData) {
+      window._owlPrefillData = prefillData || null;
       if (prefillData && prefillData.dispensers && prefillData.dispensers.length > 0) {
         quoteProducts = prefillData.dispensers;
       }
@@ -1388,6 +1390,10 @@
           notes: document.getElementById(p.id + '_notes')?.value || ''
         }))
       };
+
+      if (window._owlPrefillData && window._owlPrefillData.piaId) {
+        formData.piaId = window._owlPrefillData.piaId;
+      }
 
       // If SDK is initialized (live mode), submit to Salesforce
       const hasToken = !!getFormToken();
