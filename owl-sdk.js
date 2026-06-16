@@ -464,6 +464,87 @@
         });
     }
 
+    async function compressImage(file, maxDimension = 1920, quality = 0.85) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            const objectUrl = URL.createObjectURL(file);
+
+            img.onload = () => {
+                URL.revokeObjectURL(objectUrl);
+
+                let { width, height } = img;
+                if (width > maxDimension || height > maxDimension) {
+                    if (width >= height) {
+                        height = Math.round(height * (maxDimension / width));
+                        width = maxDimension;
+                    } else {
+                        width = Math.round(width * (maxDimension / height));
+                        height = maxDimension;
+                    }
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                const outputType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+                canvas.toBlob((blob) => {
+                    if (blob) resolve(blob);
+                    else reject(new OwlError('Image compression failed.', 'COMPRESSION_ERROR'));
+                }, outputType, quality);
+            };
+
+            img.onerror = () => {
+                URL.revokeObjectURL(objectUrl);
+                reject(new OwlError('Unable to read image file.', 'COMPRESSION_ERROR'));
+            };
+
+            img.src = objectUrl;
+        });
+    }
+
+    async function uploadPhoto(file, sectionId) {
+        if (!_initialized) {
+            throw new OwlError('SDK not initialized. Call OwlForms.init() first.', 'NOT_INITIALIZED');
+        }
+
+        const allowedTypes = ['image/jpeg', 'image/png'];
+        if (!allowedTypes.includes(file.type)) {
+            throw new OwlError('Only JPEG and PNG images are allowed.', 'VALIDATION_ERROR');
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            throw new OwlError('Photo exceeds the 5MB size limit.', 'VALIDATION_ERROR');
+        }
+
+        log('Compressing photo for section:', sectionId);
+        const compressed = await compressImage(file);
+        const base64Data = await blobToBase64(compressed);
+        const contentType = compressed.type || file.type;
+
+        const result = await apiCall('submission', 'POST', {
+            token: _config.token,
+            action: 'uploadPhoto',
+            base64Data: base64Data,
+            fileName: file.name,
+            contentType: contentType,
+            sectionId: sectionId
+        });
+
+        if (result.data.success) {
+            log('Photo uploaded:', result.data.contentDocumentId);
+            return {
+                success: true,
+                contentDocumentId: result.data.contentDocumentId,
+                contentVersionId: result.data.contentVersionId
+            };
+        }
+
+        throw new OwlError(result.data.error || 'Photo upload failed.', 'UPLOAD_ERROR');
+    }
+
     // --- Form Submission ---
 
     async function submit(options = {}) {
@@ -1279,6 +1360,8 @@
         applyConditions: applyConditions,
         getMode: getMode,
         captureFormPdf: captureFormPdf,
+        uploadPhoto: uploadPhoto,
+        compressImage: compressImage,
 
         _internal: {
             findFieldElements: findFieldElements,

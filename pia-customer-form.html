@@ -224,6 +224,57 @@
     .dropzone p { font-size: 13px; color: var(--text-light); }
     .dropzone .file-name { font-size: 12px; color: var(--blue); font-weight: 600; margin-top: 6px; }
 
+    /* Photo upload component */
+    .photo-upload { margin-top: 8px; }
+    .photo-toolbar {
+      display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;
+    }
+    .photo-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      min-height: 44px; min-width: 44px; padding: 10px 16px;
+      border: 1px solid var(--border); border-radius: var(--radius-full);
+      background: var(--white); color: var(--navy); font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all var(--transition); flex: 1;
+    }
+    .photo-btn:hover { border-color: var(--blue); background: var(--blue-light); }
+    .photo-btn input { display: none; }
+    .photo-btn .material-symbols-outlined { font-size: 20px; color: var(--blue); }
+    .photo-dropzone { position: relative; }
+    .photo-thumbnails {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;
+    }
+    .photo-thumb {
+      position: relative; width: 80px; height: 80px; border-radius: 8px;
+      overflow: hidden; border: 1px solid var(--border); background: var(--bg);
+    }
+    .photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .photo-thumb-overlay {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.85);
+    }
+    .photo-thumb-overlay.error { background: rgba(254,242,242,0.92); }
+    .photo-thumb-overlay .material-symbols-outlined { font-size: 28px; }
+    .photo-thumb-overlay .spinner {
+      width: 24px; height: 24px; border: 3px solid var(--border);
+      border-top-color: var(--blue); border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .photo-thumb-actions {
+      position: absolute; top: 4px; right: 4px; display: flex; gap: 2px;
+    }
+    .photo-thumb-btn {
+      width: 24px; height: 24px; border: none; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; background: rgba(255,255,255,0.92); color: var(--text);
+      box-shadow: var(--shadow-sm);
+    }
+    .photo-thumb-btn.remove { color: var(--red); }
+    .photo-thumb-btn.retry { color: var(--blue); font-size: 16px; }
+    .photo-thumb-btn .material-symbols-outlined { font-size: 16px; }
+    .photo-counter { font-size: 12px; color: var(--text-light); margin-top: 8px; font-weight: 500; }
+    .photo-counter.at-limit { color: var(--amber); }
+
     /* Info banner */
     .info-banner {
       display: flex; align-items: flex-start; gap: 10px;
@@ -397,6 +448,8 @@
       .accordion-body { padding: 16px; }
       .site-grid { grid-template-columns: 1fr; }
       .dropzone { padding: 40px 16px; }
+      .photo-toolbar { flex-direction: column; }
+      .photo-btn { width: 100%; }
       .accordion-header-left { min-width: 0; }
       .acc-title { font-size: 14px; word-break: break-word; }
     }
@@ -720,6 +773,43 @@
     const dispenserData = {};
     quoteProducts.forEach(p => dispenserStatus[p.id] = 'pending');
 
+    // Photo upload config (updated from SDK form config when available)
+    let photoUploadEnabled = true;
+    let maxPhotosPerSection = 5;
+    const sectionPhotos = {};
+
+    function getPhotoSectionKey(sectionId) {
+      if (!sectionPhotos[sectionId]) sectionPhotos[sectionId] = [];
+      return sectionPhotos[sectionId];
+    }
+
+    function buildPhotoUploadSection(pid, type, label) {
+      const sectionId = `${pid}_photo_${type}`;
+      return `
+          <div class="field photo-field" id="${pid}_photo_${type}" style="display:none">
+            <label class="field-label">${label}</label>
+            <div class="photo-upload" data-section-id="${sectionId}">
+              <div class="photo-toolbar">
+                <label class="photo-btn" title="Take photo">
+                  <span class="material-symbols-outlined">photo_camera</span> Camera
+                  <input type="file" accept="image/jpeg,image/png" capture="environment" class="photo-input-camera" data-section="${sectionId}">
+                </label>
+                <label class="photo-btn" title="Choose from gallery">
+                  <span class="material-symbols-outlined">photo_library</span> Gallery
+                  <input type="file" accept="image/jpeg,image/png" multiple class="photo-input-gallery" data-section="${sectionId}">
+                </label>
+              </div>
+              <div class="dropzone photo-dropzone" data-section="${sectionId}" tabindex="0" role="button" aria-label="Upload photos">
+                <span class="material-symbols-outlined">photo_camera</span>
+                <p>Drag & drop or click to upload</p>
+                <input type="file" accept="image/jpeg,image/png" multiple class="photo-input-zone" data-section="${sectionId}" style="display:none">
+              </div>
+              <div class="photo-thumbnails" id="${sectionId}_thumbs"></div>
+              <div class="photo-counter" id="${sectionId}_counter">0 of ${maxPhotosPerSection} photos</div>
+            </div>
+          </div>`;
+    }
+
     // ── NAVIGATION ────────────────────────────────────────────────────────────
     function goTo(page) {
       const cur = document.getElementById('page-' + currentPage);
@@ -808,24 +898,8 @@
               <div class="pill"><input type="radio" name="${p.id}_install" id="${p.id}_install_existing" value="existing" onchange="onInstallTypeChange('${p.id}')"><label for="${p.id}_install_existing">Replacing Existing</label></div>
             </div>
           </div>
-          <div class="field" id="${p.id}_photo_new" style="display:none">
-            <label class="field-label">Upload photo of new installation location</label>
-            <div class="dropzone" tabindex="0" role="button" onclick="document.getElementById('${p.id}_file_new').click()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('${p.id}_file_new').click()}" ondragover="dOver(event)" ondragleave="dLeave(event)" ondrop="dDrop(event,'${p.id}_file_new','${p.id}_fname_new')">
-              <span class="material-symbols-outlined">photo_camera</span>
-              <p>Drag & drop or click to upload</p>
-              <p class="file-name" id="${p.id}_fname_new"></p>
-            </div>
-            <input type="file" id="${p.id}_file_new" accept="image/*" style="display:none" onchange="showFileName(this,'${p.id}_fname_new')">
-          </div>
-          <div class="field" id="${p.id}_photo_existing" style="display:none">
-            <label class="field-label">Upload photo of existing ${isBoiler?'boiler':'dispenser'} & installation</label>
-            <div class="dropzone" tabindex="0" role="button" onclick="document.getElementById('${p.id}_file_existing').click()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('${p.id}_file_existing').click()}" ondragover="dOver(event)" ondragleave="dLeave(event)" ondrop="dDrop(event,'${p.id}_file_existing','${p.id}_fname_existing')">
-              <span class="material-symbols-outlined">photo_camera</span>
-              <p>Drag & drop or click to upload</p>
-              <p class="file-name" id="${p.id}_fname_existing"></p>
-            </div>
-            <input type="file" id="${p.id}_file_existing" accept="image/*" style="display:none" onchange="showFileName(this,'${p.id}_fname_existing')">
-          </div>
+          ${buildPhotoUploadSection(p.id, 'new', 'Upload photo of new installation location')}
+          ${buildPhotoUploadSection(p.id, 'existing', `Upload photo of existing ${isBoiler?'boiler':'dispenser'} & installation`)}
         </div>`;
 
         // Section: Space & Location
@@ -924,6 +998,7 @@
           <div class="accordion-body" id="body-${p.id}" role="region" aria-labelledby="header-${p.id}">${body}</div>
         </div>`;
       }).join('');
+      initPhotoZones();
     }
 
     // ── BUILDER: Yes/No/Unable section (standalone with border) ───────────────
@@ -1091,17 +1166,153 @@
       if (toggle) toggle.setAttribute('aria-expanded', isOpen);
     }
 
-    // ── FILE UPLOAD HELPERS ──────────────────────────────────────────────────
-    function showFileName(input, nameElId) {
-      const el = document.getElementById(nameElId);
-      if (el && input.files && input.files[0]) el.textContent = input.files[0].name;
+    // ── PHOTO UPLOAD ─────────────────────────────────────────────────────────
+    function initPhotoZones() {
+      document.querySelectorAll('.photo-dropzone').forEach(zone => {
+        const sectionId = zone.dataset.section;
+        if (zone.dataset.bound) return;
+        zone.dataset.bound = '1';
+
+        zone.addEventListener('click', (e) => {
+          if (e.target.closest('.photo-thumb')) return;
+          zone.querySelector('.photo-input-zone')?.click();
+        });
+        zone.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            zone.querySelector('.photo-input-zone')?.click();
+          }
+        });
+        zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragover'); });
+        zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+        zone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          zone.classList.remove('dragover');
+          if (e.dataTransfer.files.length) handlePhotoFiles(sectionId, e.dataTransfer.files);
+        });
+      });
+
+      document.querySelectorAll('.photo-input-camera, .photo-input-gallery, .photo-input-zone').forEach(input => {
+        if (input.dataset.bound) return;
+        input.dataset.bound = '1';
+        input.addEventListener('change', () => {
+          if (input.files && input.files.length) handlePhotoFiles(input.dataset.section, input.files);
+          input.value = '';
+        });
+      });
+
+      Object.keys(sectionPhotos).forEach(renderPhotoThumbnails);
     }
-    function dOver(e) { e.preventDefault(); e.currentTarget.classList.add('dragover'); }
-    function dLeave(e) { e.currentTarget.classList.remove('dragover'); }
-    function dDrop(e, inputId, nameId) {
-      e.preventDefault(); e.currentTarget.classList.remove('dragover');
-      const input = document.getElementById(inputId);
-      if (input && e.dataTransfer.files.length) { input.files = e.dataTransfer.files; showFileName(input, nameId); }
+
+    function handlePhotoFiles(sectionId, fileList) {
+      if (!photoUploadEnabled) return;
+      const photos = getPhotoSectionKey(sectionId);
+      const remaining = maxPhotosPerSection - photos.length;
+      if (remaining <= 0) return;
+
+      Array.from(fileList).slice(0, remaining).forEach(file => {
+        if (!['image/jpeg', 'image/png'].includes(file.type)) return;
+        if (file.size > 5 * 1024 * 1024) return;
+
+        const photo = {
+          id: 'ph_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+          file: file,
+          previewUrl: URL.createObjectURL(file),
+          status: 'uploading',
+          contentDocumentId: null,
+          error: null
+        };
+        photos.push(photo);
+        renderPhotoThumbnails(sectionId);
+        uploadPhotoItem(sectionId, photo);
+      });
+      saveDraft();
+    }
+
+    async function uploadPhotoItem(sectionId, photo) {
+      try {
+        if (window.OwlForms && window.OwlForms.isInitialized && window.OwlForms.isInitialized()) {
+          const config = window.OwlForms.getFormConfig();
+          if (config.enablePhotoUpload === false) {
+            photo.status = 'done';
+            photo.contentDocumentId = 'demo-' + photo.id;
+            renderPhotoThumbnails(sectionId);
+            saveDraft();
+            return;
+          }
+          const result = await window.OwlForms.uploadPhoto(photo.file, sectionId);
+          photo.status = 'done';
+          photo.contentDocumentId = result.contentDocumentId;
+        } else {
+          await new Promise(r => setTimeout(r, 800));
+          photo.status = 'done';
+          photo.contentDocumentId = 'demo-' + photo.id;
+        }
+      } catch (err) {
+        photo.status = 'error';
+        photo.error = err.message || 'Upload failed';
+      }
+      renderPhotoThumbnails(sectionId);
+      saveDraft();
+    }
+
+    function removePhoto(sectionId, photoId) {
+      const photos = getPhotoSectionKey(sectionId);
+      const idx = photos.findIndex(p => p.id === photoId);
+      if (idx === -1) return;
+      if (photos[idx].previewUrl) URL.revokeObjectURL(photos[idx].previewUrl);
+      photos.splice(idx, 1);
+      renderPhotoThumbnails(sectionId);
+      saveDraft();
+    }
+
+    function retryPhoto(sectionId, photoId) {
+      const photo = getPhotoSectionKey(sectionId).find(p => p.id === photoId);
+      if (!photo) return;
+      photo.status = 'uploading';
+      photo.error = null;
+      renderPhotoThumbnails(sectionId);
+      uploadPhotoItem(sectionId, photo);
+    }
+
+    function renderPhotoThumbnails(sectionId) {
+      const photos = getPhotoSectionKey(sectionId);
+      const container = document.getElementById(sectionId + '_thumbs');
+      const counter = document.getElementById(sectionId + '_counter');
+      if (!container) return;
+
+      container.innerHTML = photos.map(photo => {
+        let overlay = '';
+        if (photo.status === 'uploading') {
+          overlay = '<div class="photo-thumb-overlay"><div class="spinner"></div></div>';
+        } else if (photo.status === 'done') {
+          overlay = '<div class="photo-thumb-overlay"><span class="material-symbols-outlined" style="color:var(--green)">check_circle</span></div>';
+        } else if (photo.status === 'error') {
+          overlay = `<div class="photo-thumb-overlay error"><span class="material-symbols-outlined" style="color:var(--red)">error</span></div>`;
+        }
+
+        let actions = `<button type="button" class="photo-thumb-btn remove" onclick="removePhoto('${sectionId}','${photo.id}')" aria-label="Remove photo"><span class="material-symbols-outlined">close</span></button>`;
+        if (photo.status === 'error') {
+          actions += `<button type="button" class="photo-thumb-btn retry" onclick="retryPhoto('${sectionId}','${photo.id}')" aria-label="Retry upload"><span class="material-symbols-outlined">refresh</span></button>`;
+        }
+
+        return `<div class="photo-thumb" data-photo-id="${photo.id}">
+          <img src="${photo.previewUrl}" alt="Uploaded photo">
+          ${overlay}
+          <div class="photo-thumb-actions">${actions}</div>
+        </div>`;
+      }).join('');
+
+      if (counter) {
+        counter.textContent = `${photos.length} of ${maxPhotosPerSection} photos`;
+        counter.classList.toggle('at-limit', photos.length >= maxPhotosPerSection);
+      }
+    }
+
+    function getSectionPhotoIds(sectionId) {
+      return getPhotoSectionKey(sectionId)
+        .filter(p => p.status === 'done' && p.contentDocumentId)
+        .map(p => p.contentDocumentId);
     }
 
     // ── CHAR COUNT ───────────────────────────────────────────────────────────
@@ -1164,6 +1375,8 @@
           shutoff_valve: getRadio(p.id + '_shutoff_valve'),
           flow_rate: getRadio(p.id + '_flow_rate'),
           install_type: getRadio(p.id + '_install'),
+          photo_ids_new: getSectionPhotoIds(p.id + '_photo_new'),
+          photo_ids_existing: getSectionPhotoIds(p.id + '_photo_existing'),
           notes: document.getElementById(p.id + '_notes')?.value || ''
         }))
       };
@@ -1190,20 +1403,57 @@
         goTo(5);
       }
 
-      try { localStorage.removeItem(getDraftKey()); } catch(e) {}
+      const dk = getDraftKey();
+      if (dk) try { localStorage.removeItem(dk); } catch(e) {}
     }
 
     // ── DRAFT PERSISTENCE ─────────────────────────────────────────────────────
+    function getFormToken() {
+      return new URLSearchParams(window.location.search).get('token') || '';
+    }
+
+    function purgeLegacyDraft() {
+      try { localStorage.removeItem('pia_draft'); } catch(e) {}
+    }
+
     function getDraftKey() {
-      const token = new URLSearchParams(window.location.search).get('token');
-      return token ? `pia_draft_${token}` : 'pia_draft';
+      const token = getFormToken();
+      return token ? `pia_draft_${token}` : null;
+    }
+
+    function hasMeaningfulDraftContent(draft) {
+      if (!draft) return false;
+      if (draft.currentPage > 0) return true;
+      if (draft.dispenserStatus && Object.values(draft.dispenserStatus).some(s => s === 'done')) return true;
+      if (draft.additionalNotes || draft.fullName || draft.additionalComments || draft.deliveryAck || draft.readiness) return true;
+      if (draft.sectionPhotos && Object.values(draft.sectionPhotos).some(arr => arr && arr.length > 0)) return true;
+      return false;
     }
 
     function saveDraft() {
+      const draftKey = getDraftKey();
+      if (!draftKey) return;
+
+      const serializedPhotos = {};
+      Object.keys(sectionPhotos).forEach(key => {
+        serializedPhotos[key] = sectionPhotos[key]
+          .filter(p => p.status === 'done' || p.status === 'uploading' || p.status === 'error')
+          .map(p => ({
+            id: p.id,
+            fileName: p.file ? p.file.name : '',
+            previewUrl: p.previewUrl,
+            status: p.status,
+            contentDocumentId: p.contentDocumentId,
+            error: p.error
+          }));
+      });
+
       const draft = {
+        token: getFormToken(),
         currentPage,
         dispenserStatus: {...dispenserStatus},
         dispenserData: {...dispenserData},
+        sectionPhotos: serializedPhotos,
         additionalNotes: document.getElementById('additionalNotes')?.value || '',
         deliveryAck: document.getElementById('deliveryAck')?.checked || false,
         readiness: getRadio('readiness'),
@@ -1211,18 +1461,24 @@
         additionalComments: document.getElementById('additionalComments')?.value || '',
         savedAt: new Date().toISOString()
       };
-      try { localStorage.setItem(getDraftKey(), JSON.stringify(draft)); } catch(e) {}
+      try { localStorage.setItem(draftKey, JSON.stringify(draft)); } catch(e) {}
     }
 
     function loadDraft() {
+      purgeLegacyDraft();
+      const draftKey = getDraftKey();
+      if (!draftKey) return;
+
       try {
-        const draftKey = getDraftKey();
         const raw = localStorage.getItem(draftKey);
         if (!raw) return;
         const draft = JSON.parse(raw);
         if (!draft.savedAt) return;
+        if (draft.token && draft.token !== getFormToken()) return;
+
         const ago = Date.now() - new Date(draft.savedAt).getTime();
         if (ago > 24*60*60*1000) { localStorage.removeItem(draftKey); return; }
+        if (!hasMeaningfulDraftContent(draft)) { localStorage.removeItem(draftKey); return; }
 
         const banner = document.createElement('div');
         banner.className = 'info-banner';
@@ -1231,8 +1487,22 @@
         banner.onclick = () => {
           Object.assign(dispenserStatus, draft.dispenserStatus || {});
           Object.assign(dispenserData, draft.dispenserData || {});
+          if (draft.sectionPhotos) {
+            Object.keys(draft.sectionPhotos).forEach(key => {
+              sectionPhotos[key] = (draft.sectionPhotos[key] || []).map(p => ({...p}));
+            });
+          }
           renderAccordions();
           restoreAllFields();
+          Object.keys(sectionPhotos).forEach(sectionId => {
+            sectionPhotos[sectionId].forEach(photo => {
+              if (photo.status === 'uploading' || photo.status === 'error') {
+                photo.status = 'error';
+                photo.error = photo.error || 'Upload interrupted — tap retry';
+              }
+            });
+            renderPhotoThumbnails(sectionId);
+          });
           if (draft.additionalNotes) document.getElementById('additionalNotes').value = draft.additionalNotes;
           if (draft.deliveryAck) document.getElementById('deliveryAck').checked = true;
           if (draft.fullName) document.getElementById('fullName').value = draft.fullName;
@@ -1267,6 +1537,11 @@
           || '';
         if (token && baseUrl) {
           window.OwlForms.init({ baseUrl: baseUrl, token: token }).then(function() {
+            var config = window.OwlForms.getFormConfig();
+            if (config) {
+              photoUploadEnabled = config.enablePhotoUpload !== false;
+              if (config.maxPhotosPerSection) maxPhotosPerSection = config.maxPhotosPerSection;
+            }
             var data = window.OwlForms.getPrefillData();
             if (data && window._owlFormReady) window._owlFormReady(data);
           });
