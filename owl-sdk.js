@@ -16,7 +16,7 @@
 (function(global) {
     'use strict';
 
-    const VERSION = '1.0.3';
+    const VERSION = '1.0.4';
     const PDF_CAPTURE_TIMEOUT_MS = 15000;
     const DEFAULT_SUBMIT_MESSAGE = 'Submitting your assessment...';
 
@@ -607,14 +607,20 @@
     }
 
     async function uploadSubmissionPdf(base64Data, submissionId) {
+        if (!submissionId) {
+            throw new OwlError('Submission ID is required for PDF upload.', 'VALIDATION_ERROR');
+        }
+
+        console.log('[OWL SDK] Uploading PDF for submission:', submissionId);
+
         const result = await apiCall('submission', 'POST', {
-            token: _config.token,
             action: 'uploadPdf',
-            base64Data: base64Data,
-            submissionId: submissionId || null
+            submissionId: submissionId,
+            base64Data: base64Data
         });
 
         if (result.data.success) {
+            console.log('[OWL SDK] PDF uploaded successfully for submission:', submissionId);
             log('PDF uploaded for submission:', submissionId);
             return result.data;
         }
@@ -623,17 +629,22 @@
     }
 
     function scheduleBackgroundPdfUpload(submissionId) {
+        console.log('[OWL SDK] Scheduling background PDF upload for submission:', submissionId);
         (async () => {
             try {
+                console.log('[OWL SDK] Background PDF capture started for submission:', submissionId);
                 log('Background PDF capture started for submission:', submissionId);
                 const pdfBase64 = await captureFormPdf();
                 if (!pdfBase64) {
+                    console.log('[OWL SDK] Background PDF capture skipped or failed');
                     log('Background PDF capture skipped or failed silently');
                     return;
                 }
+                console.log('[OWL SDK] PDF captured, size:', Math.round(pdfBase64.length / 1024) + 'KB');
                 log('PDF captured in background, size:', Math.round(pdfBase64.length / 1024) + 'KB');
                 await uploadSubmissionPdf(pdfBase64, submissionId);
             } catch (pdfErr) {
+                console.error('[OWL SDK] Background PDF upload failed (submission already saved):', pdfErr.message);
                 error('Background PDF upload failed (submission already saved):', pdfErr.message);
             }
         })();
@@ -680,6 +691,7 @@
                 showSubmitting(false);
 
                 if (_formConfig.generatePdf) {
+                    console.log('[OWL SDK] generatePdf enabled, submissionId:', result.data.submissionId);
                     if (backgroundPdf) {
                         scheduleBackgroundPdfUpload(result.data.submissionId);
                     } else {
