@@ -1321,6 +1321,7 @@
     function updateCharCount() {
       const ta = document.getElementById('additionalNotes');
       const ct = document.getElementById('charCount');
+      if (!ta || !ct) return;
       ct.textContent = ta.value.length + ' / 500';
       ct.classList.toggle('over', ta.value.length >= 500);
     }
@@ -1357,9 +1358,10 @@
       saveAllFields();
 
       const submitBtn = document.querySelector('#page-4 .btn-success');
+      const submitBtnDefaultHtml = 'Submit Assessment <span class="material-symbols-outlined">check</span>';
       if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.innerHTML = 'Submitting... <span class="material-symbols-outlined">hourglass_top</span>';
+        submitBtn.innerHTML = 'Submitting your assessment... <span class="material-symbols-outlined">hourglass_top</span>';
       }
 
       const formData = {
@@ -1369,9 +1371,9 @@
         site_postcode: document.getElementById('rv_postcode')?.textContent || '',
         site_contact: document.getElementById('rv_contact')?.textContent || '',
         additional_notes: document.getElementById('additionalNotes')?.value || '',
-        signoff_name: document.getElementById('fullName').value.trim(),
+        signoff_name: document.getElementById('fullName')?.value.trim() || '',
         readiness_status: getRadio('readiness'),
-        legal_agreed: document.getElementById('legalAgree').checked,
+        legal_agreed: document.getElementById('legalAgree')?.checked || false,
         dispenserResults: quoteProducts.map(p => ({
           oliId: p.oliId || '',
           name: p.name,
@@ -1395,17 +1397,26 @@
         formData.piaId = window._owlPrefillData.piaId;
       }
 
-      // If SDK is initialized (live mode), submit to Salesforce
+      let submitted = false;
       const hasToken = !!getFormToken();
+
       if (window.OwlForms && window.OwlForms.isInitialized()) {
         try {
           Object.keys(formData).forEach(key => {
             window.OwlForms.setFieldData(key, formData[key]);
           });
-          const result = await window.OwlForms.submit({ showLoading: true });
+          const result = await window.OwlForms.submit({
+            showLoading: true,
+            skipDefaultSuccessUI: true,
+            backgroundPdf: true,
+            loadingMessage: 'Submitting your assessment...'
+          });
           if (result && result.success) {
-            document.getElementById('refNumber').textContent =
-              result.submissionName || formData.referenceNumber;
+            const refEl = document.getElementById('refNumber');
+            if (refEl) {
+              refEl.textContent = result.submissionName || result.reference || formData.referenceNumber;
+            }
+            submitted = true;
             goTo(5);
           } else {
             const errMsg = (result && result.error) || 'Submission failed. Please try again.';
@@ -1413,31 +1424,26 @@
           }
         } catch (e) {
           alert('Submission failed — ' + (e.message || 'Please check your connection and try again.'));
-        } finally {
-          if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = 'Submit Assessment <span class="material-symbols-outlined">check</span>';
-          }
         }
       } else if (hasToken) {
         alert('Unable to connect to Salesforce. Please check your connection and reload the form.');
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = 'Submit Assessment <span class="material-symbols-outlined">check</span>';
-        }
       } else {
-        // Demo mode - no token in URL
-        document.getElementById('refNumber').textContent = formData.referenceNumber;
+        const refEl = document.getElementById('refNumber');
+        if (refEl) refEl.textContent = formData.referenceNumber;
         console.log('PIA Submission (demo):', JSON.stringify(formData, null, 2));
+        submitted = true;
         goTo(5);
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = 'Submit Assessment <span class="material-symbols-outlined">check</span>';
-        }
       }
 
-      const dk = getDraftKey();
-      if (dk) try { localStorage.removeItem(dk); } catch(e) {}
+      if (!submitted && submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = submitBtnDefaultHtml;
+      }
+
+      if (submitted) {
+        const dk = getDraftKey();
+        if (dk) try { localStorage.removeItem(dk); } catch(e) {}
+      }
     }
 
     // ── DRAFT PERSISTENCE ─────────────────────────────────────────────────────

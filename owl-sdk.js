@@ -16,8 +16,9 @@
 (function(global) {
     'use strict';
 
-    const VERSION = '1.0.2';
+    const VERSION = '1.0.3';
     const PDF_CAPTURE_TIMEOUT_MS = 15000;
+    const DEFAULT_SUBMIT_MESSAGE = 'Submitting your assessment...';
 
     let _config = {
         baseUrl: '',
@@ -421,6 +422,13 @@
         clone.querySelectorAll('.btn-row, .progress-track, .form-header, .form-footer').forEach(el => {
             el.style.display = 'none';
         });
+
+        // Photos are heavy for html2canvas — hide uploads in PDF snapshot
+        clone.querySelectorAll(
+            '.photo-upload, .photo-thumbnails, .photo-toolbar, .photo-dropzone, .dropzone, [data-owl-pdf-exclude]'
+        ).forEach(el => {
+            el.style.display = 'none';
+        });
     }
 
     function createPdfCaptureWrapper(pages) {
@@ -614,6 +622,23 @@
         throw new OwlError(result.data.error || 'PDF upload failed.', 'UPLOAD_ERROR');
     }
 
+    function scheduleBackgroundPdfUpload(submissionId) {
+        (async () => {
+            try {
+                log('Background PDF capture started for submission:', submissionId);
+                const pdfBase64 = await captureFormPdf();
+                if (!pdfBase64) {
+                    log('Background PDF capture skipped or failed silently');
+                    return;
+                }
+                log('PDF captured in background, size:', Math.round(pdfBase64.length / 1024) + 'KB');
+                await uploadSubmissionPdf(pdfBase64, submissionId);
+            } catch (pdfErr) {
+                error('Background PDF upload failed (submission already saved):', pdfErr.message);
+            }
+        })();
+    }
+
     // --- Form Submission ---
 
     async function submit(options = {}) {
@@ -623,11 +648,15 @@
 
         if (_submitting) {
             log('Submission already in progress, ignoring');
-            return;
+            return { success: false, error: 'Submission already in progress' };
         }
 
         _submitting = true;
         stopAutoSave();
+
+        const submitMessage = options.loadingMessage || DEFAULT_SUBMIT_MESSAGE;
+        const skipDefaultSuccessUI = options.skipDefaultSuccessUI === true;
+        const backgroundPdf = options.backgroundPdf !== false;
 
         try {
             const formData = collectFormData();
@@ -636,7 +665,7 @@
             log('Submitting form data:', Object.keys(mergedData).length, 'fields');
 
             if (options.showLoading !== false) {
-                showSubmitting(true, 'Submitting your assessment...');
+                showSubmitting(true, submitMessage);
             }
 
             const result = await apiCall('submission', 'POST', {
@@ -648,36 +677,35 @@
             if (result.data.success) {
                 log('Submission successful:', result.data.submissionId);
 
+                showSubmitting(false);
+
                 if (_formConfig.generatePdf) {
-                    if (options.showLoading !== false) {
-                        updateSubmittingMessage('Generating PDF...');
-                    }
-                    const pdfBase64 = await captureFormPdf();
-                    if (pdfBase64) {
-                        log('PDF captured, size:', Math.round(pdfBase64.length / 1024) + 'KB');
+                    if (backgroundPdf) {
+                        scheduleBackgroundPdfUpload(result.data.submissionId);
+                    } else {
                         try {
-                            if (options.showLoading !== false) {
-                                updateSubmittingMessage('Uploading PDF...');
+                            const pdfBase64 = await captureFormPdf();
+                            if (pdfBase64) {
+                                await uploadSubmissionPdf(pdfBase64, result.data.submissionId);
                             }
-                            await uploadSubmissionPdf(pdfBase64, result.data.submissionId);
                         } catch (pdfErr) {
                             error('PDF upload failed after successful submission:', pdfErr.message);
                         }
                     }
                 }
 
-                showSubmitting(false);
-
                 if (_config.onSubmitSuccess) {
                     _config.onSubmitSuccess(result.data);
                 }
 
-                if (result.data.redirectUrl) {
-                    setTimeout(() => {
-                        window.location.href = result.data.redirectUrl;
-                    }, 1500);
-                } else {
-                    showSuccess(result.data.message || 'Form submitted successfully.');
+                if (!skipDefaultSuccessUI) {
+                    if (result.data.redirectUrl) {
+                        setTimeout(() => {
+                            window.location.href = result.data.redirectUrl;
+                        }, 1500);
+                    } else {
+                        showSuccess(result.data.message || 'Form submitted successfully.');
+                    }
                 }
 
                 return result.data;
@@ -826,6 +854,10 @@
 
     // --- UI Feedback ---
 
+    function setElementText(element, text) {
+        if (element) element.textContent = text;
+    }
+
     function showLoading(show) {
         let overlay = document.getElementById('owl-loading-overlay');
         if (show) {
@@ -866,7 +898,7 @@
                 `;
                 document.body.appendChild(overlay);
             }
-            updateSubmittingMessage(message || 'Submitting...');
+            updateSubmittingMessage(message || DEFAULT_SUBMIT_MESSAGE);
             overlay.style.display = '';
         } else if (overlay) {
             overlay.remove();
@@ -874,12 +906,21 @@
     }
 
     function updateSubmittingMessage(message) {
-        const msgEl = document.getElementById('owl-submitting-message');
-        if (msgEl) msgEl.textContent = message;
+        if (!message) return;
+        let msgEl = document.getElementById('owl-submitting-message');
+        if (!msgEl) {
+            showSubmitting(true, message);
+            msgEl = document.getElementById('owl-submitting-message');
+        }
+        setElementText(msgEl, message);
     }
 
     function showSuccess(message) {
-        const container = document.getElementById('owl-form-container') || document.body;
+        const container = document.getElementById('owl-form-container');
+        if (!container) {
+            log('Submission success (custom UI expected):', message);
+            return;
+        }
         container.innerHTML = `
             <div style="max-width:500px;margin:80px auto;text-align:center;font-family:sans-serif;padding:40px;">
                 <div style="width:60px;height:60px;background:#4caf50;border-radius:50%;margin:0 auto 20px;
@@ -895,7 +936,11 @@
     }
 
     function showError(message) {
-        const container = document.getElementById('owl-form-container') || document.body;
+        const container = document.getElementById('owl-form-container');
+        if (!container) {
+            showBlockingErrorOverlay(message);
+            return;
+        }
         container.innerHTML = `
             <div style="max-width:500px;margin:80px auto;text-align:center;font-family:sans-serif;padding:40px;">
                 <div style="width:60px;height:60px;background:#f44336;border-radius:50%;margin:0 auto 20px;
@@ -911,13 +956,41 @@
         `;
     }
 
+    function showBlockingErrorOverlay(message) {
+        let overlay = document.getElementById('owl-error-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'owl-error-overlay';
+            document.body.appendChild(overlay);
+        }
+        overlay.innerHTML = `
+            <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.97);
+                display:flex;align-items:center;justify-content:center;z-index:99999;padding:24px;box-sizing:border-box;">
+                <div style="max-width:420px;text-align:center;font-family:sans-serif;">
+                    <div style="width:60px;height:60px;background:#f44336;border-radius:50%;margin:0 auto 20px;
+                        display:flex;align-items:center;justify-content:center;color:#fff;font-size:28px;">!</div>
+                    <h2 style="color:#333;margin-bottom:12px;">Unable to Load Form</h2>
+                    <p style="color:#666;line-height:1.6;">${escapeHtml(message)}</p>
+                </div>
+            </div>
+        `;
+    }
+
     function showFormError(message) {
         let banner = document.getElementById('owl-error-banner');
         if (!banner) {
             banner = document.createElement('div');
             banner.id = 'owl-error-banner';
-            const form = document.querySelector('form') || document.body.firstElementChild || document.body;
-            form.parentNode.insertBefore(banner, form);
+            const anchor = document.getElementById('main-content')
+                || document.querySelector('main')
+                || document.querySelector('form')
+                || document.body.firstElementChild
+                || document.body;
+            if (anchor && anchor.parentNode) {
+                anchor.parentNode.insertBefore(banner, anchor);
+            } else {
+                document.body.prepend(banner);
+            }
         }
         banner.innerHTML = `
             <div style="background:#fff3f3;border:1px solid #f44336;border-radius:8px;padding:12px 16px;
@@ -941,7 +1014,7 @@
                 'opacity:0;transition:opacity 0.3s;';
             document.body.appendChild(indicator);
         }
-        indicator.textContent = 'Draft saved';
+        setElementText(indicator, 'Draft saved');
         indicator.style.opacity = '1';
         setTimeout(() => { indicator.style.opacity = '0'; }, 2500);
     }
