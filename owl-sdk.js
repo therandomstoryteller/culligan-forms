@@ -286,47 +286,31 @@
         });
     }
 
-    const PDF_CAPTURE_WIDTH_PX = 640;
+    const PDF_CAPTURE_WIDTH_PX = 800;
+    const PDF_MARGIN_MM = 10;
 
-    function getPdfCaptureOptions(contentHeight) {
-        const scale = getPdfCanvasScale();
-        const html2canvas = {
-            scale,
-            useCORS: true,
-            logging: false,
-            width: PDF_CAPTURE_WIDTH_PX,
-            windowWidth: PDF_CAPTURE_WIDTH_PX,
-            scrollX: 0,
-            scrollY: 0
-        };
-        if (contentHeight) {
-            html2canvas.height = contentHeight;
-            html2canvas.windowHeight = contentHeight;
-        }
+    function getPdfLibs() {
         return {
-            margin: [10, 10, 10, 10],
-            image: { type: 'jpeg', quality: isMobileDevice() ? 0.75 : 0.85 },
-            html2canvas,
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            jsPDF: window.jspdf?.jsPDF || window.jsPDF,
+            html2canvas: window.html2canvas
         };
     }
 
     function getOffScreenPdfWrapperStyle() {
-        return 'position:fixed;left:-10000px;top:0;width:' + PDF_CAPTURE_WIDTH_PX + 'px;' +
-            'overflow:visible;height:auto;pointer-events:none;z-index:-1;';
+        return 'position:fixed;left:-9999px;top:0;width:' + PDF_CAPTURE_WIDTH_PX + 'px;' +
+            'overflow:visible;height:auto;pointer-events:none;opacity:1;visibility:visible;background:#fff;';
     }
 
     function injectPdfCaptureStyles(doc) {
+        if (doc.querySelector('style[data-owl-pdf-styles]')) return;
+
         const style = doc.createElement('style');
         style.setAttribute('data-owl-pdf-styles', '');
         style.textContent = [
-            'html, body { margin:0; padding:0; background:#fff; overflow:visible !important; height:auto !important; }',
-            '[data-owl-pdf-wrapper] { width:' + PDF_CAPTURE_WIDTH_PX + 'px; overflow:visible !important; height:auto !important; }',
+            '[data-owl-pdf-wrapper] { width:' + PDF_CAPTURE_WIDTH_PX + 'px; overflow:visible !important; height:auto !important; background:#fff; }',
             '.page, .owl-pdf-page { display:block !important; opacity:1 !important; visibility:visible !important;',
             '  position:relative !important; height:auto !important; min-height:auto !important; overflow:visible !important; }',
-            '.owl-pdf-header-wrap { page-break-after:avoid; break-after:avoid-page; }',
-            '.owl-pdf-page + .owl-pdf-page { page-break-before:always; break-before:page; }',
-            '.owl-pdf-page:last-child { page-break-after:auto !important; break-after:auto !important; }',
+            '.owl-pdf-header-wrap { margin-bottom:8px; }',
             '.btn-row, .progress-track, .form-header, .form-footer, .step-dots { display:none !important; }',
             '.accordion.open .accordion-body, .accordion .accordion-body { display:block !important; height:auto !important; }',
             '.owl-pdf-header .logo, .owl-pdf-header .logo svg { display:block !important; height:24px; width:auto; }'
@@ -334,46 +318,29 @@
         doc.head.appendChild(style);
     }
 
+    function ensurePdfCaptureStyles() {
+        injectPdfCaptureStyles(document);
+    }
+
+    function removePdfCaptureStyles() {
+        const styleEl = document.querySelector('style[data-owl-pdf-styles]');
+        if (styleEl) styleEl.remove();
+    }
+
     function getPdfFormTitle() {
         const raw = (document.title || '').replace(/^[^—-]+[—-]\s*/, '').trim();
         return raw || 'Form Submission';
     }
 
-    async function mountPdfCaptureHost(contentNode) {
+    function mountPdfCaptureWrapper(wrapper) {
         const outer = document.createElement('div');
         outer.setAttribute('data-owl-pdf-outer', '');
         outer.setAttribute('aria-hidden', 'true');
         outer.style.cssText = getOffScreenPdfWrapperStyle();
-
-        const iframe = document.createElement('iframe');
-        iframe.setAttribute('data-owl-pdf-iframe', '');
-        iframe.setAttribute('tabindex', '-1');
-        iframe.setAttribute('aria-hidden', 'true');
-        iframe.style.cssText = 'position:absolute;left:0;top:0;width:' + PDF_CAPTURE_WIDTH_PX +
-            'px;height:auto;min-height:100vh;border:0;overflow:visible;';
-
-        outer.appendChild(iframe);
+        outer.appendChild(wrapper);
         document.body.appendChild(outer);
-
-        await new Promise((resolve) => {
-            iframe.onload = () => resolve();
-            iframe.src = 'about:blank';
-        });
-
-        const doc = iframe.contentDocument;
-        doc.open();
-        doc.write('<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;background:#fff"></body></html>');
-        doc.close();
-
-        Array.from(document.querySelectorAll('style, link[rel="stylesheet"]')).forEach((node) => {
-            doc.head.appendChild(node.cloneNode(true));
-        });
-        injectPdfCaptureStyles(doc);
-
-        const host = doc.body;
-        host.style.cssText = 'margin:0;padding:0;background:#fff;overflow:visible;height:auto;';
-        host.appendChild(contentNode);
-        return { outer, iframe, host, doc };
+        ensurePdfCaptureStyles();
+        return outer;
     }
 
     async function waitForCaptureReady(host) {
@@ -397,43 +364,52 @@
         await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     }
 
-    function getCaptureRoot(host) {
-        return host.querySelector('[data-owl-pdf-wrapper]') || host.firstElementChild || host;
+    function getHtml2CanvasOptions() {
+        return {
+            scale: getPdfCanvasScale(),
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff',
+            width: PDF_CAPTURE_WIDTH_PX,
+            windowWidth: PDF_CAPTURE_WIDTH_PX,
+            scrollX: 0,
+            scrollY: 0
+        };
     }
 
-    async function sizeCaptureIframe(iframe, host, outer) {
-        await waitForCaptureReady(host);
-
-        const captureRoot = getCaptureRoot(host);
-        let height = 0;
-        Array.from(captureRoot.children).forEach(child => {
-            const rect = child.getBoundingClientRect();
-            height += Math.max(rect.height, child.scrollHeight, child.offsetHeight);
-        });
-        height = Math.max(
-            height,
-            captureRoot.scrollHeight,
-            captureRoot.offsetHeight,
-            host.scrollHeight,
-            host.offsetHeight,
-            800
-        ) + 120;
-
-        iframe.style.height = height + 'px';
-        iframe.style.width = PDF_CAPTURE_WIDTH_PX + 'px';
-        iframe.style.overflow = 'visible';
-
-        if (outer) {
-            outer.style.height = height + 'px';
-            outer.style.overflow = 'visible';
+    async function renderElementsToPdfBlob(elements) {
+        const { jsPDF, html2canvas } = getPdfLibs();
+        if (!jsPDF || !html2canvas) {
+            error('PDF libraries not available after load');
+            return null;
         }
 
-        host.style.height = 'auto';
-        host.style.overflow = 'visible';
-        captureRoot.style.height = 'auto';
-        captureRoot.style.overflow = 'visible';
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const contentWidth = pageWidth - (PDF_MARGIN_MM * 2);
+        const contentHeight = pageHeight - (PDF_MARGIN_MM * 2);
+        const jpegQuality = isMobileDevice() ? 0.75 : 0.85;
+        const canvasOptions = getHtml2CanvasOptions();
 
-        return height;
+        for (let i = 0; i < elements.length; i++) {
+            const element = elements[i];
+            const canvas = await html2canvas(element, canvasOptions);
+            const imgData = canvas.toDataURL('image/jpeg', jpegQuality);
+
+            let imgWidth = contentWidth;
+            let imgHeight = (canvas.height * imgWidth) / canvas.width;
+            if (imgHeight > contentHeight) {
+                const fitScale = contentHeight / imgHeight;
+                imgWidth *= fitScale;
+                imgHeight = contentHeight;
+            }
+
+            if (i > 0) pdf.addPage();
+            pdf.addImage(imgData, 'JPEG', PDF_MARGIN_MM, PDF_MARGIN_MM, imgWidth, imgHeight);
+        }
+
+        return pdf.output('blob');
     }
 
     function createPdfHeader() {
@@ -631,46 +607,56 @@
         const clone = source.cloneNode(true);
         copyFormValuesToClone(source, clone);
         preparePdfClone(clone);
+        clone.classList.add('owl-pdf-page');
 
-        let captureHost = null;
+        const wrapper = document.createElement('div');
+        wrapper.setAttribute('data-owl-pdf-wrapper', '');
+        wrapper.style.cssText = 'width:' + PDF_CAPTURE_WIDTH_PX + 'px;background:#fff;overflow:visible;';
+
+        const header = createPdfHeader();
+        if (header) {
+            const headerWrap = document.createElement('div');
+            headerWrap.className = 'owl-pdf-header-wrap';
+            headerWrap.setAttribute('data-owl-pdf-header-wrap', '');
+            headerWrap.appendChild(header);
+            wrapper.appendChild(headerWrap);
+        }
+        wrapper.appendChild(clone);
+
+        let outer = null;
         try {
-            captureHost = await mountPdfCaptureHost(clone);
-            const contentHeight = await sizeCaptureIframe(captureHost.iframe, captureHost.host, captureHost.outer);
-            const captureEl = getCaptureRoot(captureHost.host);
-            const opt = {
-                ...getPdfCaptureOptions(contentHeight),
-                filename: 'form-submission.pdf',
-                pagebreak: { mode: ['css', 'legacy'] }
-            };
-            const pdfBlob = await html2pdf().set(opt).from(captureEl).outputPdf('blob');
+            outer = mountPdfCaptureWrapper(wrapper);
+            await waitForCaptureReady(wrapper);
+            const captureTargets = Array.from(wrapper.children);
+            const pdfBlob = await renderElementsToPdfBlob(captureTargets);
+            if (!pdfBlob) return null;
             return await blobToBase64(pdfBlob);
         } catch (err) {
             error('Single-page PDF capture failed:', err);
             return null;
         } finally {
-            if (captureHost && captureHost.outer) captureHost.outer.remove();
+            if (outer) outer.remove();
+            removePdfCaptureStyles();
         }
     }
 
     async function captureMultiPagePdf(pages) {
         const wrapper = createPdfCaptureWrapper(pages);
 
-        let captureHost = null;
+        let outer = null;
         try {
-            captureHost = await mountPdfCaptureHost(wrapper);
-            const contentHeight = await sizeCaptureIframe(captureHost.iframe, captureHost.host, captureHost.outer);
-            const captureEl = getCaptureRoot(captureHost.host);
-            const opt = {
-                ...getPdfCaptureOptions(contentHeight),
-                pagebreak: { mode: ['css', 'legacy'] }
-            };
-            const pdfBlob = await html2pdf().set(opt).from(captureEl).outputPdf('blob');
+            outer = mountPdfCaptureWrapper(wrapper);
+            await waitForCaptureReady(wrapper);
+            const captureTargets = Array.from(wrapper.children);
+            const pdfBlob = await renderElementsToPdfBlob(captureTargets);
+            if (!pdfBlob) return null;
             return await blobToBase64(pdfBlob);
         } catch (err) {
             error('Multi-page PDF capture failed:', err);
             return null;
         } finally {
-            if (captureHost && captureHost.outer) captureHost.outer.remove();
+            if (outer) outer.remove();
+            removePdfCaptureStyles();
         }
     }
 
