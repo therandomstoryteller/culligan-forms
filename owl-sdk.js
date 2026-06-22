@@ -447,15 +447,55 @@
         return header;
     }
 
-    async function loadPdfLibrary() {
-        if (_pdfLibLoaded) return true;
-        return new Promise((resolve, reject) => {
+    function loadPdfScript(src) {
+        return new Promise((resolve) => {
+            if (document.querySelector('script[src="' + src + '"]')) {
+                resolve(true);
+                return;
+            }
             const script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js';
-            script.onload = () => { _pdfLibLoaded = true; resolve(true); };
-            script.onerror = () => { error('Failed to load html2pdf.js'); resolve(false); };
+            script.src = src;
+            script.onload = () => resolve(true);
+            script.onerror = () => resolve(false);
             document.head.appendChild(script);
         });
+    }
+
+    async function loadPdfLibrary() {
+        if (_pdfLibLoaded) return true;
+
+        const PDF_LIBS = {
+            html2canvas: 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+            jsPDF: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
+        };
+
+        let { jsPDF, html2canvas } = getPdfLibs();
+
+        if (!html2canvas) {
+            const loaded = await loadPdfScript(PDF_LIBS.html2canvas);
+            if (!loaded) {
+                error('Failed to load html2canvas');
+                return false;
+            }
+            html2canvas = getPdfLibs().html2canvas;
+        }
+
+        if (!jsPDF) {
+            const loaded = await loadPdfScript(PDF_LIBS.jsPDF);
+            if (!loaded) {
+                error('Failed to load jsPDF');
+                return false;
+            }
+            jsPDF = getPdfLibs().jsPDF;
+        }
+
+        if (!jsPDF || !html2canvas) {
+            error('PDF libraries not available after load');
+            return false;
+        }
+
+        _pdfLibLoaded = true;
+        return true;
     }
 
     function getFormPageScope() {
