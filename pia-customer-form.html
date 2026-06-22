@@ -523,7 +523,8 @@
       .dim-strip { max-width: 100%; }
     }
 
-    /* Location tag */
+    /* Location input in accordion */
+    .location-field-wrap { margin-bottom: 0; }
     .location-tag {
       display: inline-flex; align-items: center; gap: 4px;
       font-size: 12px; color: var(--text-light);
@@ -849,17 +850,26 @@
         imageUrl:'./assets/pia-images/7. C7 FS.jpg',
         specs: { h: 1299, w: 599, d: 499 },
         clearance: '100mm clearance required each side and at the rear, with 30mm above',
+        unitNumber: 1, totalUnits: 2,
         location: 'Kitchen area, 2nd Floor' },
+      { id:'d1_unit-2', name:'C7 Firewall®', type:'Freestanding', features:['Hot','Cold','Ambient','Sparkling'],
+        imageUrl:'./assets/pia-images/7. C7 FS.jpg',
+        specs: { h: 1299, w: 599, d: 499 },
+        clearance: '100mm clearance required each side and at the rear, with 30mm above',
+        unitNumber: 2, totalUnits: 2,
+        location: 'Break Room, 2nd Floor' },
       { id:'d2', name:'C100', type:'Freestanding', features:['Hot','Cold'],
         imageUrl:'./assets/pia-images/1. C100 FS HC.jpg',
         specs: { h: 1279, w: 358, d: 530 },
         clearance: '100mm either side for ventilation',
-        location: '' },
+        unitNumber: 1, totalUnits: 1,
+        location: 'Reception' },
       { id:'d3', name:'Instanta CTS5', type:'Boiler', features:['Hot'],
         imageUrl:'./assets/pia-images/11 Instanata CTS5.jpg',
         specs: { h: 590, w: 270, d: 400 },
         clearance: '',
-        location: '' }
+        unitNumber: 1, totalUnits: 1,
+        location: 'Kitchen, Ground Floor' }
     ];
 
     // SDK integration: read prefill data if provided by OWL SDK
@@ -1002,6 +1012,32 @@
       </div>`;
     }
 
+    function getDispenserTitle(p) {
+      const unitSuffix = (p.totalUnits > 1)
+        ? ` — Unit ${p.unitNumber || 1} of ${p.totalUnits}`
+        : '';
+      return `${p.name} — ${p.type}${unitSuffix}`;
+    }
+
+    function getDispenserLocation(pid) {
+      const input = document.getElementById(pid + '_location');
+      if (input) return input.value.trim();
+      const product = quoteProducts.find(item => item.id === pid);
+      return product?.location || '';
+    }
+
+    function buildLocationField(p) {
+      const escapedLocation = (p.location || '').replace(/"/g, '&quot;');
+      return `<div class="check-section">
+          <div class="section-title"><span class="material-symbols-outlined">edit_location</span> Installation Location</div>
+          <div class="field location-field-wrap">
+            <label class="field-label" for="${p.id}_location">Where will this unit be installed?</label>
+            <input type="text" id="${p.id}_location" value="${escapedLocation}" placeholder="e.g. Kitchen, Ground Floor" aria-label="Installation location for ${p.name}">
+            <div class="field-hint">Confirm or update the location suggested by your Culligan representative.</div>
+          </div>
+        </div>`;
+    }
+
     function buildProductSpecCard(p) {
       const imgUrl = getProductImage(p);
       const specs = getProductSpecs(p);
@@ -1053,7 +1089,7 @@
             ${dimStripHTML}
           </div>
           <div class="product-spec-info">
-            <div class="spec-model-name">${p.name} — ${p.type}</div>
+            <div class="spec-model-name">${getDispenserTitle(p)}</div>
             <div class="spec-badges">${p.features.map(featureBadge).join('')}</div>
             <div class="spec-meta">
               ${locationMetaHTML}
@@ -1080,7 +1116,7 @@
           ${buildReviewThumbnail(p)}
           <div style="flex:1;min-width:0;">
             <div class="dispenser-review-top">
-              <h4>Dispenser ${i+1}: ${p.name} — ${p.type}</h4>
+              <h4>Dispenser ${i+1}: ${getDispenserTitle(p)}</h4>
               <div class="badges">${p.features.map(featureBadge).join('')}</div>
             </div>
             <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:4px;">
@@ -1111,6 +1147,7 @@
 
         // Product spec card (v5 structure)
         body += buildProductSpecCard(p);
+        body += buildLocationField(p);
 
         // Section: Installation Type + Photos
         body += `<div class="check-section">
@@ -1216,7 +1253,7 @@
           <button class="accordion-header" id="header-${p.id}" aria-expanded="false" onclick="toggleAcc('${p.id}')">
             <div class="accordion-header-left">
               <span class="acc-label">Dispenser ${i+1}</span>
-              <span class="acc-title">${p.name} <span class="acc-type">(${p.type})</span></span>
+              <span class="acc-title">${getDispenserTitle(p)}</span>
             </div>
             <div class="accordion-header-right">
               ${statusHTML}
@@ -1601,10 +1638,13 @@
         readiness_status: getRadio('readiness'),
         legal_agreed: document.getElementById('legalAgree')?.checked || false,
         dispenserResults: quoteProducts.map(p => ({
+          dispenserId: p.id,
           oliId: p.oliId || '',
           name: p.name,
           type: p.type,
-          location: p.location || '',
+          unitNumber: p.unitNumber || 1,
+          totalUnits: p.totalUnits || 1,
+          location: getDispenserLocation(p.id),
           location_suitable: getRadio(p.id + '_space'),
           socket_distance: getRadio(p.id + '_socket_distance'),
           socket_working: getRadio(p.id + '_socket_working'),
